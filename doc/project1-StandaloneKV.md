@@ -1,6 +1,6 @@
 # Project1 StandaloneKV
 
-In this project, you will build a standalone key/value storage [gRPC](https://grpc.io/docs/guides/) service with the support of the column family. Standalone means only a single node, not a distributed system. [Column family]( <https://en.wikipedia.org/wiki/Standard_column_family> ) (it will abbreviate to CF below) is a term like key namespace, namely the values of the same key in different column families is not the same. You can simply regard multiple column families as separate mini databases. It’s used to support the transaction model in the project4, you will know why TinyKV needs the support of CF then.
+In this project, you will build a standalone key/value storage [gRPC](https://grpc.io/docs/guides/) service with the support of the column family. Standalone means only a single node, not a distributed system. [Column family]( <https://en.wikipedia.org/wiki/Standard_column_family> ) (it will abbreviate to CF below) is a term like key namespace, **namely the values of the same key in different column families is not the same**. You can simply regard multiple column families as separate mini databases. It’s used to support the transaction model in the project4, you will know why TinyKV needs the support of CF then.
 
 The service supports four basic operations: Put/Delete/Get/Scan. It maintains a simple database of key/value pairs. Keys and values are strings. `Put` replaces the value for a particular key for the specified CF in the database, `Delete` deletes the key's value for the specified CF, `Get` fetches the current value for a key for the specified CF, and `Scan` fetches the current value for a series of keys for the specified CF.
 
@@ -19,7 +19,7 @@ In addition, `Server` depends on a `Storage`, an interface you need to implement
 
 #### Implement standalone storage engine
 
-The first mission is implementing a wrapper of [badger](https://github.com/dgraph-io/badger) key/value API. The service of gRPC server depends on an `Storage` which is defined in `kv/storage/storage.go`. In this context, the standalone storage engine is just a wrapper of badger key/value API which is provided by two methods:
+**The first mission is implementing a wrapper of [badger](https://github.com/dgraph-io/badger) key/value API.** The service of gRPC server depends on an `Storage` which is defined in `kv/storage/storage.go`. In this context, the standalone storage engine is just a wrapper of badger key/value API which is provided by two methods:
 
 ``` go
 type Storage interface {
