@@ -223,8 +223,8 @@ func TestFollowerVote2AA(t *testing.T) {
 	for i, tt := range tests {
 		r := newTestRaft(1, []uint64{1, 2, 3}, 10, 1, NewMemoryStorage())
 		r.Term = 1
-		r.Vote = tt.vote
-
+		r.Vote = tt.vote	// 模拟本节点已经投票了
+		// 模拟 tt.vote 这个节点发起 RequestVote
 		r.Step(pb.Message{From: tt.nvote, To: 1, Term: 1, MsgType: pb.MessageType_MsgRequestVote})
 
 		msgs := r.readMessages()

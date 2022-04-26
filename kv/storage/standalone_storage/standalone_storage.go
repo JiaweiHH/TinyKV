@@ -2,7 +2,6 @@ package standalone_storage
 
 import (
 	"github.com/Connor1996/badger"
-	"os"
 	"path/filepath"
 
 	"github.com/pingcap-incubator/tinykv/kv/config"
@@ -46,7 +45,7 @@ func NewStandAloneStorage(conf *config.Config) *StandAloneStorage {
 	// Your Code Here (1).
 	dbPath := conf.DBPath
 	kvPath := filepath.Join(dbPath, "kv")
-	os.MkdirAll(kvPath, os.ModePerm)
+	//os.MkdirAll(kvPath, os.ModePerm)
 	kvDB := engine_util.CreateDB(kvPath, false)
 	engines := engine_util.NewEngines(kvDB, nil, kvPath, "")
 	return &StandAloneStorage{engines: engines, config: conf}

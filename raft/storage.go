@@ -39,7 +39,7 @@ var ErrUnavailable = errors.New("requested entry at index is unavailable")
 var ErrSnapshotTemporarilyUnavailable = errors.New("snapshot is temporarily unavailable")
 
 // Storage is an interface that may be implemented by the application
-// to retrieve log entries from storage.
+// to retrieve log entries from storage.（Storage 是用来存 storage 中检索 log entries 的）
 //
 // If any Storage method returns an error, the raft instance will
 // become inoperable and refuse to participate in elections; the
@@ -50,11 +50,13 @@ type Storage interface {
 	// Entries returns a slice of log entries in the range [lo,hi).
 	// MaxSize limits the total size of the log entries returned, but
 	// Entries returns at least one entry if any.
+	// 传入起始和结束索引值，以及最大的尺寸，返回索引范围在这个传入范围以内并且不超过大小的日志条目数组
 	Entries(lo, hi uint64) ([]pb.Entry, error)
 	// Term returns the term of entry i, which must be in the range
 	// [FirstIndex()-1, LastIndex()]. The term of the entry before
 	// FirstIndex is retained for matching purposes even though the
 	// rest of that entry may not be available.
+	// 传入日志索引 i，返回这条日志的任期号，i 的范围需要在 [first_index - 1, last_index]
 	Term(i uint64) (uint64, error)
 	// LastIndex returns the index of the last entry in the log.
 	LastIndex() (uint64, error)
@@ -66,7 +68,7 @@ type Storage interface {
 	// Snapshot returns the most recent snapshot.
 	// If snapshot is temporarily unavailable, it should return ErrSnapshotTemporarilyUnavailable,
 	// so raft state machine could know that Storage needs some time to prepare
-	// snapshot and call Snapshot later.
+	// snapshot and call Snapshot later.（返回最近的快照）
 	Snapshot() (pb.Snapshot, error)
 }
 

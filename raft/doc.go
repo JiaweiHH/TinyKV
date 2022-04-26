@@ -67,17 +67,17 @@ it contains. These steps may be performed in parallel, except as noted in step
 
 1. Write HardState, Entries, and Snapshot to persistent storage if they are
 not empty. Note that when writing an Entry with Index i, any
-previously-persisted entries with Index >= i must be discarded.
+previously-persisted entries with Index >= i must be discarded.（写数据）
 
 2. Send all Messages to the nodes named in the To field. It is important that
 no messages be sent until the latest HardState has been persisted to disk,
 and all Entries written by any previous Ready batch (Messages may be sent while
-entries from the same batch are being persisted).
+entries from the same batch are being persisted).（发送消息）
 
 Note: Marshalling messages is not thread-safe; it is important that you
 make sure that no new entries are persisted while marshalling.
 The easiest way to achieve this is to serialize the messages directly inside
-your main raft loop.
+your main raft loop.（消息序列化不是线程安全的）
 
 3. Apply Snapshot (if any) and CommittedEntries to the state machine.
 If any committed Entry has Type EntryType_EntryConfChange, call Node.ApplyConfChange()
@@ -89,14 +89,14 @@ the observed health of the node).
 
 4. Call Node.Advance() to signal readiness for the next batch of updates.
 This may be done at any time after step 1, although all updates must be processed
-in the order they were returned by Ready.
+in the order they were returned by Ready.（Node.Advance() 表示准备好了下一批数据，可以在步骤 1 之后的任何时间执行）
 
 Second, all persisted log entries must be made available via an
 implementation of the Storage interface. The provided MemoryStorage
 type can be used for this (if you repopulate its state upon a
-restart), or you can supply your own disk-backed implementation.
+restart), or you can supply your own disk-backed implementation.（MemoryStorage 可以用来持久化日志）
 
-Third, when you receive a message from another node, pass it to Node.Step:
+Third, when you receive a message from another node, pass it to Node.Step: （收来来自其他节点的消息的时候，使用 Step）
 
 	func recvRaftRPC(ctx context.Context, m eraftpb.Message) {
 		n.Step(ctx, m)
@@ -105,9 +105,9 @@ Third, when you receive a message from another node, pass it to Node.Step:
 Finally, you need to call Node.Tick() at regular intervals (probably
 via a time.Ticker). Raft has two important timeouts: heartbeat and the
 election timeout. However, internally to the raft package time is
-represented by an abstract "tick".
+represented by an abstract "tick". （调用 Tick 更新时间间隔）
 
-The total state machine handling loop will look something like this:
+The total state machine handling loop will look something like this: （状态机的循环类似下面这样）
 
   for {
     select {
@@ -134,7 +134,7 @@ The total state machine handling loop will look something like this:
   }
 
 To propose changes to the state machine from your node take your application
-data, serialize it into a byte slice and call:
+data, serialize it into a byte slice and call: （客户端 propose 数据给状态机）
 
 	n.Propose(data)
 
@@ -142,7 +142,7 @@ If the proposal is committed, data will appear in committed entries with type
 eraftpb.EntryType_EntryNormal. There is no guarantee that a proposed command will be
 committed; you may have to re-propose after a timeout.
 
-To add or remove a node in a cluster, build ConfChange struct 'cc' and call:
+To add or remove a node in a cluster, build ConfChange struct 'cc' and call: （集群成员变更）
 
 	n.ProposeConfChange(cc)
 
