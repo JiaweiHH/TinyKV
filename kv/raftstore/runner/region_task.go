@@ -79,12 +79,12 @@ type snapContext struct {
 
 // handleGen handles the task of generating snapshot of the Region.
 func (snapCtx *snapContext) handleGen(regionId uint64, notifier chan<- *eraftpb.Snapshot) {
-	snap, err := doSnapshot(snapCtx.engines, snapCtx.mgr, regionId)
+	snap, err := doSnapshot(snapCtx.engines, snapCtx.mgr, regionId) // 扫描底层 engines 生成快照
 	if err != nil {
 		log.Errorf("failed to generate snapshot!!!, [regionId: %d, err : %v]", regionId, err)
 		notifier <- nil
 	} else {
-		notifier <- snap
+		notifier <- snap // 通过 channel 发送快照
 	}
 }
 
@@ -175,6 +175,7 @@ func doSnapshot(engines *engine_util.Engines, mgr *snap.SnapManager, regionId ui
 	mgr.Register(key, snap.SnapEntryGenerating)
 	defer mgr.Deregister(key, snap.SnapEntryGenerating)
 
+	// 读取 regionId 中的数据到 regionState
 	regionState := new(rspb.RegionLocalState)
 	err = engine_util.GetMetaFromTxn(txn, meta.RegionStateKey(regionId), regionState)
 	if err != nil {
@@ -184,7 +185,7 @@ func doSnapshot(engines *engine_util.Engines, mgr *snap.SnapManager, regionId ui
 		return nil, errors.Errorf("snap job %d seems stale, skip", regionId)
 	}
 
-	region := regionState.GetRegion()
+	region := regionState.GetRegion() // 获取 region 信息
 	confState := util.ConfStateFromRegion(region)
 	snapshot := &eraftpb.Snapshot{
 		Metadata: &eraftpb.SnapshotMetadata{

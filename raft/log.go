@@ -14,7 +14,10 @@
 
 package raft
 
-import pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
+import (
+	"github.com/pingcap-incubator/tinykv/log"
+	pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
+)
 
 // RaftLog manage the log entries, its struct look like:
 //
@@ -50,6 +53,8 @@ type RaftLog struct {
 
 	// the incoming unstable snapshot, if any.
 	// (Used in 2C)
+	// 收到 leader 的快照的时候，会将快照保存在此处，后续会把快照保存到 Ready 中去
+	// 上层应用会应用 Ready 里面的快照
 	pendingSnapshot *pb.Snapshot
 
 	// Your Data Here (2A).
@@ -58,11 +63,12 @@ type RaftLog struct {
 
 // newLog returns log using the given storage. It recovers the log
 // to the state that it just commits and applies the latest snapshot.
+//（这里的 Storage 就是 PeerStorage）
 func newLog(storage Storage) *RaftLog {
 	// Your Code Here (2A).
 	firstIndex, _ := storage.FirstIndex()
 	lastIndex, _ := storage.LastIndex()
-	log := &RaftLog{
+	l := &RaftLog{
 		storage:    storage,
 		committed:  firstIndex - 1,
 		applied:    firstIndex - 1,
@@ -74,10 +80,15 @@ func newLog(storage Storage) *RaftLog {
 	// commitIndex 不持久后续会通过 AppendEntry Request 慢慢更新回重新启动之前的值
 	// 但是这么做的缺点就是上层应用需要去除重复的日志提交，例如使用递增序列号
 	hardState, _, _ := storage.InitialState()
-	log.committed = hardState.Commit
+	l.committed = hardState.Commit
 	entries, _ := storage.Entries(firstIndex, lastIndex+1)
-	log.entries = append(log.entries, entries[0:]...)
-	return log
+	l.entries = append(l.entries, entries[0:]...)
+	log.Infof("{newLog} firstIndex %v, lastIndex %v, len(entries) %v, committed %v", firstIndex, lastIndex, len(l.entries), l.committed)
+	return l
+}
+
+func (l *RaftLog) FirstIndex() uint64 {
+	return l.dummyIndex
 }
 
 // We need to compact the log entries in some point of time like
@@ -85,6 +96,13 @@ func newLog(storage Storage) *RaftLog {
 // grow unlimitedly in memory
 func (l *RaftLog) maybeCompact() {
 	// Your Code Here (2C).
+	newFirst, _ := l.storage.FirstIndex()
+	if newFirst > l.dummyIndex {
+		entries := l.entries[newFirst-l.dummyIndex:]
+		l.entries = make([]pb.Entry, 0)
+		l.entries = append(l.entries, entries...)
+	}
+	l.dummyIndex = newFirst
 }
 
 // unstableEntries return all the unstable entries（返回所有未持久化到 storage 的日志）
@@ -100,9 +118,12 @@ func (l *RaftLog) unstableEntries() []pb.Entry {
 //（返回所有已经 commit 但是没有 applied 的日志，包括之前任期内的 commit 日志）
 func (l *RaftLog) nextEnts() (ents []pb.Entry) {
 	// Your Code Here (2A).
-	appliedIndex := l.applied
-	if l.committed > appliedIndex {
-		return l.entries[appliedIndex:l.committed]
+	// applied = 5, committed = 5 (dummyIndex = 6) ----> applied = 5, committed = 10
+	// log: [6, 7, 8, 9, 10, 11, 12], we want entries in [applied + 1, committed + 1]
+	// applied + 1 = applied - dummyIndex + 1, committed + 1 = committed - dummyIndex + 1
+	diff := l.dummyIndex - 1
+	if l.committed > l.applied {
+		return l.entries[l.applied-diff : l.committed-diff]
 	}
 	return make([]pb.Entry, 0)
 }
@@ -120,29 +141,49 @@ func (l *RaftLog) isUpToDate(index, term uint64) bool {
 // LastIndex return the last index of the log entries
 func (l *RaftLog) LastIndex() uint64 {
 	// Your Code Here (2A).
-	if len(l.entries) == 0 {
-		return 0
-	}
-	return l.entries[len(l.entries)-1].Index
+	// 下面注释的写法是错误的，因为主动创建的 storage 的 INIT_INDEX = 5
+	// 此时如果调用 hasReady 会执行 unstableEntries()->lastIndex()
+	// 如果按照下面的写法，就会去获取 [l.stabled = 5, lastIndex + 1 - dummyIndex = -4] 的数据
+	//if len(l.entries) == 0 {
+	//	return 0
+	//}
+	//return l.entries[len(l.entries)-1].Index
+
+	// 另外一个原因是 dummyIndex 初始的时候也是 INIT_INDEX+1(6)，因此根据 dummyIndex 来计算 lastIndex 是合理的
+	return l.dummyIndex - 1 + uint64(len(l.entries))
 }
 
 // Term return the term of the entry in the given index
 func (l *RaftLog) Term(i uint64) (uint64, error) {
 	// Your Code Here (2A).
-	if i == 0 {
-		return 0, nil
+	// 1. 如果内存日志中包含这条日志，直接返回查询结果
+	if i >= l.dummyIndex {
+		return l.entries[i-l.dummyIndex].Term, nil
 	}
-	entriesIndex := i - l.dummyIndex
-	return l.entries[entriesIndex].Term, nil
+	// 2. 判断 i 是否等于当前正准备安装的快照的最后一条日志
+	if !IsEmptySnap(l.pendingSnapshot) && i == l.pendingSnapshot.Metadata.Index {
+		return l.pendingSnapshot.Metadata.Term, nil
+	}
+	// 3. 否则的话 i 只能是快照中的日志
+	term, err := l.storage.Term(i)
+	return term, err
 }
 
 func (l *RaftLog) TermNoErr(i uint64) uint64 {
 	// Your Code Here (2A).
-	if i == 0 {
-		return 0
+	//if i < l.dummyIndex {
+	//	return 0
+	//}
+	//entriesIndex := i - l.dummyIndex
+	//return l.entries[entriesIndex].Term
+	if i >= l.dummyIndex {
+		return l.entries[i-l.dummyIndex].Term
 	}
-	entriesIndex := i - l.dummyIndex
-	return l.entries[entriesIndex].Term
+	if !IsEmptySnap(l.pendingSnapshot) && i == l.pendingSnapshot.Metadata.Index {
+		return l.pendingSnapshot.Metadata.Term
+	}
+	term, _ := l.storage.Term(i)
+	return term
 }
 
 // LastTerm 返回最后一条日志的索引

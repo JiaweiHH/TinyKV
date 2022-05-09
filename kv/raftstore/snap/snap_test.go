@@ -194,7 +194,7 @@ func doTestSnapFile(t *testing.T, dbHasData bool) {
 	require.Nil(t, err)
 	assert.False(t, s3.Exists())
 
-	// Ensure snapshot data could be read out of `s2`, and write into `s3`.
+	// Ensure snapshot data could be read test_result of `s2`, and write into `s3`.
 	copySize, err := io.Copy(s3, s2)
 	require.Nil(t, err)
 	assert.Equal(t, size, copySize)

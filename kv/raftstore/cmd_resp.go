@@ -33,8 +33,8 @@ func ErrResp(err error) *raft_cmdpb.RaftCmdResponse {
 }
 
 func ErrRespWithTerm(err error, term uint64) *raft_cmdpb.RaftCmdResponse {
-	resp := ErrResp(err)
-	BindRespTerm(resp, term)
+	resp := ErrResp(err)     // 创建 ErrResp 并绑定 Err
+	BindRespTerm(resp, term) // 绑定 Term 到 resp
 	return resp
 }
 

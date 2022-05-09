@@ -2,6 +2,9 @@ package raftstore
 
 import (
 	"fmt"
+	"github.com/pingcap-incubator/tinykv/kv/raftstore/meta"
+	"github.com/pingcap-incubator/tinykv/kv/util/engine_util"
+	pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
 	"time"
 
 	"github.com/Connor1996/badger/y"
@@ -38,24 +41,164 @@ func newPeerMsgHandler(peer *peer, ctx *GlobalContext) *peerMsgHandler {
 	}
 }
 
+// HandleRaftReady 从 Raft 模块获取 Ready 消息，然后执行
+// 持久化日志、执行 committed 的 entries、发送 raft message 给别的节点
 func (d *peerMsgHandler) HandleRaftReady() {
-	if d.stopped {
+	if d.stopped || !d.RaftGroup.HasReady() {
 		return
 	}
 	// Your Code Here (2B).
+	ready := d.RaftGroup.Ready()
+	// 保存 unstable entries, hard state, snapshot
+	_, err := d.peerStorage.SaveReadyState(&ready)
+	if err != nil {
+		log.Panic(err)
+	}
+	//if applySnapResult != nil {
+	//	if !reflect.DeepEqual(applySnapResult.PrevRegion, applySnapResult.Region) {
+	//		d.peerStorage.SetRegion(applySnapResult.Region)
+	//		storeMeta := d.ctx.storeMeta
+	//		storeMeta.Lock()
+	//		storeMeta.regions[applySnapResult.Region.Id] = applySnapResult.Region
+	//		storeMeta.regionRanges.Delete(&regionItem{applySnapResult.PrevRegion})
+	//		storeMeta.regionRanges.ReplaceOrInsert(&regionItem{applySnapResult.Region})
+	//		storeMeta.Unlock()
+	//	}
+	//}
+	d.Send(d.ctx.trans, ready.Messages) // 发送消息给别的节点
+	kvWB := &engine_util.WriteBatch{}
+	// 处理 Raft 提交的日志（apply committed entries）
+	if len(ready.CommittedEntries) > 0 {
+		for _, ent := range ready.CommittedEntries {
+			//if d.IsLeader() {
+			//	log.Infof("[apply] commit entryIndex %v", ent.Index)
+			//}
+			kvWB = d.processCommittedEntry(&ent, kvWB)
+		}
+		// 更新 RaftApplyState
+		lastEntry := ready.CommittedEntries[len(ready.CommittedEntries)-1]
+		d.peerStorage.applyState.AppliedIndex = lastEntry.Index
+		if err := kvWB.SetMeta(meta.ApplyStateKey(d.regionId), d.peerStorage.applyState); err != nil {
+			log.Panic(err)
+		}
+		kvWB.MustWriteToDB(d.peerStorage.Engines.Kv) // 在这里一次性执行所有的 Command 操作和 ApplyState 更新操作
+	}
+	d.RaftGroup.Advance(ready) // 驱动 RawNode 更新 raft 状态
 }
 
+func (d *peerMsgHandler) processCommittedEntry(entry *pb.Entry, kvWB *engine_util.WriteBatch) *engine_util.WriteBatch {
+	requests := &raft_cmdpb.RaftCmdRequest{} // 解析 entry.Data 中的数据
+	if err := requests.Unmarshal(entry.Data); err != nil {
+		log.Panic(err)
+	}
+	if requests.AdminRequest != nil {
+		return d.processAdminRequest(entry, requests, kvWB)
+	} else {
+		return d.processRequest(entry, requests, kvWB)
+	}
+}
+
+// processAdminRequest 处理 commit 的 Admin Request 类型 command
+func (d *peerMsgHandler) processAdminRequest(entry *pb.Entry, requests *raft_cmdpb.RaftCmdRequest, kvWB *engine_util.WriteBatch) *engine_util.WriteBatch {
+	adminReq := requests.AdminRequest
+	switch adminReq.CmdType {
+	case raft_cmdpb.AdminCmdType_CompactLog: // CompactLog 类型请求不需要将执行结果存储到 proposal 回调
+		// 记录最后一条被截断的日志（快照中的最后一条日志）的索引和任期
+		if adminReq.CompactLog.CompactIndex > d.peerStorage.applyState.TruncatedState.Index {
+			truncatedState := d.peerStorage.applyState.TruncatedState
+			truncatedState.Index, truncatedState.Term = adminReq.CompactLog.CompactIndex, adminReq.CompactLog.CompactTerm
+			// 调度日志截断任务到 raftlog-gc worker
+			d.ScheduleCompactLog(adminReq.CompactLog.CompactIndex)
+			log.Infof("%d apply commit, entry %v, type %s, truncatedIndex %v", d.peer.PeerId(), entry.Index, adminReq.CmdType, adminReq.CompactLog.CompactIndex)
+		}
+	}
+	return kvWB
+}
+
+// processRequest 处理 commit 的 Put/Get/Delete/Snap 类型 command
+func (d *peerMsgHandler) processRequest(entry *pb.Entry, requests *raft_cmdpb.RaftCmdRequest, kvWB *engine_util.WriteBatch) *engine_util.WriteBatch {
+	// TODO 为什么一个 RaftCmdRequest 中有多个 request
+	// 因为 leader 会收集多个客户端的 request，一次性提交给 Raft 模块
+	resp := &raft_cmdpb.RaftCmdResponse{
+		Header:    &raft_cmdpb.RaftResponseHeader{},
+		Responses: make([]*raft_cmdpb.Response, 0),
+	}
+	// 处理一次请求中包含的所有操作
+	for _, req := range requests.Requests {
+		switch req.CmdType {
+		case raft_cmdpb.CmdType_Get:
+			value, _ := engine_util.GetCF(d.peerStorage.Engines.Kv, req.Get.Cf, req.Get.Key)
+			resp.Responses = append(resp.Responses, &raft_cmdpb.Response{
+				CmdType: raft_cmdpb.CmdType_Get,
+				Get:     &raft_cmdpb.GetResponse{Value: value},
+			})
+			kvWB.MustWriteToDB(d.peerStorage.Engines.Kv) // Get 和 Snap 请求需要先将结果写到 DB
+			kvWB = &engine_util.WriteBatch{}
+
+			log.Infof("%d apply commit, entry %d, type %s, [k:%s]", d.peer.PeerId(), entry.Index, req.CmdType, req.Get.Key)
+		case raft_cmdpb.CmdType_Put:
+			kvWB.SetCF(req.Put.Cf, req.Put.Key, req.Put.Value)
+			resp.Responses = append(resp.Responses, &raft_cmdpb.Response{
+				CmdType: raft_cmdpb.CmdType_Put,
+				Put:     &raft_cmdpb.PutResponse{},
+			})
+			log.Infof("%d apply commit, entry %d, type %s, [k:%s, v:%s]", d.peer.PeerId(), entry.Index, req.CmdType, req.Put.Key, req.Put.Value)
+		case raft_cmdpb.CmdType_Delete:
+			kvWB.DeleteCF(req.Delete.Cf, req.Delete.Key)
+			resp.Responses = append(resp.Responses, &raft_cmdpb.Response{
+				CmdType: raft_cmdpb.CmdType_Delete,
+				Delete:  &raft_cmdpb.DeleteResponse{},
+			})
+			log.Infof("%d apply commit, entry %d, type %s, [k:%s]", d.peer.PeerId(), entry.Index, req.CmdType, req.Delete.Key)
+		case raft_cmdpb.CmdType_Snap:
+			resp.Responses = append(resp.Responses, &raft_cmdpb.Response{
+				CmdType: raft_cmdpb.CmdType_Snap,
+				Snap:    &raft_cmdpb.SnapResponse{Region: d.Region()},
+			})
+			kvWB.MustWriteToDB(d.peerStorage.Engines.Kv) // Get 和 Snap 请求需要先将结果写到 DB，否则的话如果有多个 entry 同时被 apply，客户端无法及时看到写入的结果
+			kvWB = &engine_util.WriteBatch{}
+
+			log.Infof("%d apply commit, entry %d, type %s", d.peer.PeerId(), entry.Index, req.CmdType)
+		}
+	}
+	// 找到等待 entry 的回调（proposal），存入操作的执行结果（resp）
+	// 有可能会找到过期的回调（term 比较小或者 index 比较小），此时应该使用 Stable Command 响应并从回调数组中删除 proposal
+	// 其他情况：正确匹配的 proposal（处理完毕之后应该立即结束），further proposal（直接返回）
+	for len(d.proposals) > 0 {
+		proposal := d.proposals[0]
+		// proposal.index < entry.index 是有可能出现的
+		// 如果 leader 宕机了并且有一个新的 leader 向它发送了快照，当应用了快照之后又继续同步了新的日志并 commit 了
+		// 这个时候 proposal.index < entry.index
+		if proposal.term < entry.Term || proposal.index < entry.Index {
+			// 日志被截断的情况
+			NotifyStaleReq(proposal.term, proposal.cb)
+			d.proposals = d.proposals[1:]
+			continue
+		}
+		if proposal.term == entry.Term && proposal.index == entry.Index {
+			// 正常匹配
+			proposal.cb.Txn = d.peerStorage.Engines.Kv.NewTransaction(false) // snap resp should set txn explicitly
+			proposal.cb.Done(resp)
+			d.proposals = d.proposals[1:]
+		}
+		// further proposal（即当前的 entry 并没有 proposal 在等待，或许是因为现在是 follower 在处理 committed entry）
+		return kvWB
+	}
+	return kvWB
+}
+
+// HandleMsg propose 客户端提交的 command、驱动 raft 执行 tick
 func (d *peerMsgHandler) HandleMsg(msg message.Msg) {
 	switch msg.Type {
-	case message.MsgTypeRaftMessage:
+	case message.MsgTypeRaftMessage: // 来自别的 RaftStore 的 Msg
 		raftMsg := msg.Data.(*rspb.RaftMessage)
 		if err := d.onRaftMsg(raftMsg); err != nil {
 			log.Errorf("%s handle raft message error %v", d.Tag, err)
 		}
-	case message.MsgTypeRaftCmd:
+	case message.MsgTypeRaftCmd: // client 发起的 Request
 		raftCMD := msg.Data.(*message.MsgRaftCmd)
 		d.proposeRaftCommand(raftCMD.Request, raftCMD.Callback)
-	case message.MsgTypeTick:
+	case message.MsgTypeTick: // 驱动 RawNode 执行 tick
 		d.onTick()
 	case message.MsgTypeSplitRegion:
 		split := msg.Data.(*message.MsgSplitRegion)
@@ -66,7 +209,7 @@ func (d *peerMsgHandler) HandleMsg(msg message.Msg) {
 	case message.MsgTypeGcSnap:
 		gcSnap := msg.Data.(*message.MsgGCSnap)
 		d.onGCSnap(gcSnap.Snaps)
-	case message.MsgTypeStart:
+	case message.MsgTypeStart: // 启动 Peer
 		d.startTicker()
 	}
 }
@@ -107,6 +250,35 @@ func (d *peerMsgHandler) preProposeRaftCommand(req *raft_cmdpb.RaftCmdRequest) e
 	return err
 }
 
+func (d *peerMsgHandler) proposeAdminRequest(msg *raft_cmdpb.RaftCmdRequest, cb *message.Callback) {
+	// 当前只处理 AdminCmdType_CompactLog 类行的 Admin Request
+	data, err := msg.Marshal()
+	if err != nil {
+		log.Panic(err)
+	}
+	if err := d.RaftGroup.Propose(data); err != nil {
+		log.Panic(err)
+	}
+}
+
+func (d *peerMsgHandler) proposeRequest(msg *raft_cmdpb.RaftCmdRequest, cb *message.Callback) {
+	// BUG1: 下面步骤 1 和步骤 2 的位置不能互换，如果先执行步骤 2 的话会导致步骤 1 中的 proposal 变为 further proposal
+	// 1. 创建 proposal 等待 log apply 的时候返回结果
+	d.proposals = append(d.proposals, &proposal{
+		index: d.nextProposalIndex(), // p.RaftGroup.Raft.RaftLog.LastIndex() + 1
+		term:  d.Term(),              // p.RaftGroup.Raft.Term
+		cb:    cb,
+	})
+	// 2. 序列化 RaftCmdRequest，并提交到 Raft
+	data, e := msg.Marshal()
+	if e != nil {
+		log.Panic(e)
+	}
+	if e := d.RaftGroup.Propose(data); e != nil {
+		log.Panic(e)
+	}
+}
+
 func (d *peerMsgHandler) proposeRaftCommand(msg *raft_cmdpb.RaftCmdRequest, cb *message.Callback) {
 	err := d.preProposeRaftCommand(msg)
 	if err != nil {
@@ -114,6 +286,12 @@ func (d *peerMsgHandler) proposeRaftCommand(msg *raft_cmdpb.RaftCmdRequest, cb *
 		return
 	}
 	// Your Code Here (2B).
+	if msg.AdminRequest != nil {
+		d.proposeAdminRequest(msg, cb)
+	} else {
+		d.proposeRequest(msg, cb)
+	}
+
 }
 
 func (d *peerMsgHandler) onTick() {
@@ -150,6 +328,7 @@ func (d *peerMsgHandler) onRaftBaseTick() {
 	d.ticker.schedule(PeerTickRaft)
 }
 
+// ScheduleCompactLog 将任务调度到 raft-gc worker，raft-gc worker 会异步的删除日志
 func (d *peerMsgHandler) ScheduleCompactLog(truncatedIndex uint64) {
 	raftLogGCTask := &runner.RaftLogGCTask{
 		RaftEngine: d.ctx.engine.Raft,
@@ -403,6 +582,9 @@ func (d *peerMsgHandler) findSiblingRegion() (result *metapb.Region) {
 	return
 }
 
+// onRaftGCLogTick 定期检查是否需要对日志进行压缩，如果需要的话会发出一个 Raft Admin Command：CompactLogRequest
+// 该命令会修改元数据，更新 RaftApplyState 中的 RaftTruncatedState
+// 执行完该命令之后需要通过 ScheduleCompactLog 将任务调度到 raft-gc worker，raft-gc worker 会异步的删除日志
 func (d *peerMsgHandler) onRaftGCLogTick() {
 	d.ticker.schedule(PeerTickRaftLogGC)
 	if !d.IsLeader() {

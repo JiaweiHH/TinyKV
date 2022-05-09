@@ -22,7 +22,7 @@ type Server struct {
 	// (Used in 4A/4B)
 	Latches *latches.Latches
 
-	// coprocessor API handler, out of course scope
+	// coprocessor API handler, test_result of course scope
 	copHandler *coprocessor.CopHandler
 }
 

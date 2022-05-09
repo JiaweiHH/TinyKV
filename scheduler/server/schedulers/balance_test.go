@@ -332,7 +332,7 @@ func (s *testBalanceLeaderSchedulerSuite) TestBalanceSelector(c *C) {
 	s.tc.AddLeaderRegion(1, 4, 2, 3)
 	s.tc.AddLeaderRegion(2, 3, 1, 2)
 	// store4 has max leader score, store1 has min leader score.
-	// The scheduler try to move a leader out of 16 first.
+	// The scheduler try to move a leader test_result of 16 first.
 	testutil.CheckTransferLeader(c, s.schedule(), operator.OpBalance, 4, 2)
 
 	// Stores:     1    2    3    4
@@ -341,7 +341,7 @@ func (s *testBalanceLeaderSchedulerSuite) TestBalanceSelector(c *C) {
 	// Region2:    F    F    L    -
 	s.tc.UpdateLeaderCount(2, 14)
 	s.tc.UpdateLeaderCount(3, 15)
-	// Cannot move leader out of store4, move a leader into store1.
+	// Cannot move leader test_result of store4, move a leader into store1.
 	testutil.CheckTransferLeader(c, s.schedule(), operator.OpBalance, 3, 1)
 
 	// Stores:     1    2    3    4

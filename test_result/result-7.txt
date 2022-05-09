@@ -1,0 +1,1017 @@
+rm -rf /tmp/*test-raftstore*
+GO111MODULE=on go test -v --count=1 --parallel=1 -p=1 ./raft -run 2C || true
+=== RUN   TestRestoreSnapshot2C
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 1, lastIndex 0, len(entries) 0, committed 0[0m
+2022/05/09 20:58:02 raft.go:707: [0;37m[info] [handle snapshot] 1 install snapshot, truncatedIndex 11, dummyIndex 12[0m
+--- PASS: TestRestoreSnapshot2C (0.00s)
+=== RUN   TestRestoreIgnoreSnapshot2C
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 1, lastIndex 3, len(entries) 3, committed 0[0m
+2022/05/09 20:58:02 raft.go:689: [0;37m[info] [handle snapshot] 1 reject snapshot[0m
+--- PASS: TestRestoreIgnoreSnapshot2C (0.00s)
+=== RUN   TestProvideSnap2C
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 1, lastIndex 0, len(entries) 0, committed 0[0m
+2022/05/09 20:58:02 raft.go:707: [0;37m[info] [handle snapshot] 1 install snapshot, truncatedIndex 11, dummyIndex 12[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 11, len(Entries) = 1, lastIndex 12[0m
+2022/05/09 20:58:02 raft.go:298: [0;37m[info] [Snapshot Request]1 to 2, prevLogIndex 9, dummyIndex 12[0m
+--- PASS: TestProvideSnap2C (0.00s)
+=== RUN   TestRestoreFromSnapMsg2C
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 1, lastIndex 0, len(entries) 0, committed 0[0m
+2022/05/09 20:58:02 raft.go:707: [0;37m[info] [handle snapshot] 2 install snapshot, truncatedIndex 11, dummyIndex 12[0m
+--- PASS: TestRestoreFromSnapMsg2C (0.00s)
+=== RUN   TestSlowNodeRestore2C
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 1, lastIndex 0, len(entries) 0, committed 0[0m
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 1, lastIndex 0, len(entries) 0, committed 0[0m
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 1, lastIndex 0, len(entries) 0, committed 0[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 0, len(Entries) = 1, lastIndex 1[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 0, len(Entries) = 1, lastIndex 1[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 0, len(m.Entry) 1, resp.Index 1, commitIndex 0[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 3 prevLogIndex 0, len(m.Entry) 1, resp.Index 1, commitIndex 0[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 1[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 1[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 1, len(Entries) = 0, lastIndex 1[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 0, len(Entries) = 1, lastIndex 1[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 3, Index = 1[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 1, len(m.Entry) 0, resp.Index 1, commitIndex 1[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 3 prevLogIndex 0, len(m.Entry) 1, resp.Index 1, commitIndex 1[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 1[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 3, Index = 1[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 1, len(Entries) = 1, lastIndex 2[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 1, lastIndex 2[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 1, len(m.Entry) 1, resp.Index 2, commitIndex 1[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 2[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 2[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 2, len(Entries) = 0, lastIndex 2[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 1, lastIndex 2[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 2, len(m.Entry) 0, resp.Index 2, commitIndex 2[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 2[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 2, len(Entries) = 1, lastIndex 3[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 2, lastIndex 3[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 2, len(m.Entry) 1, resp.Index 3, commitIndex 2[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 3[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 3[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 3, len(Entries) = 0, lastIndex 3[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 2, lastIndex 3[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 3, len(m.Entry) 0, resp.Index 3, commitIndex 3[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 3[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 3, len(Entries) = 1, lastIndex 4[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 3, lastIndex 4[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 3, len(m.Entry) 1, resp.Index 4, commitIndex 3[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 4[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 4[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 4, len(Entries) = 0, lastIndex 4[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 3, lastIndex 4[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 4, len(m.Entry) 0, resp.Index 4, commitIndex 4[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 4[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 4, len(Entries) = 1, lastIndex 5[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 4, lastIndex 5[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 4, len(m.Entry) 1, resp.Index 5, commitIndex 4[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 5[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 5[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 5, len(Entries) = 0, lastIndex 5[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 4, lastIndex 5[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 5, len(m.Entry) 0, resp.Index 5, commitIndex 5[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 5[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 5, len(Entries) = 1, lastIndex 6[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 5, lastIndex 6[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 5, len(m.Entry) 1, resp.Index 6, commitIndex 5[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 6[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 6[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 5, lastIndex 6[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 6, len(Entries) = 0, lastIndex 6[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 6, len(m.Entry) 0, resp.Index 6, commitIndex 6[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 6[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 6, len(Entries) = 1, lastIndex 7[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 6, lastIndex 7[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 6, len(m.Entry) 1, resp.Index 7, commitIndex 6[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 7[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 7[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 7, len(Entries) = 0, lastIndex 7[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 6, lastIndex 7[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 7, len(m.Entry) 0, resp.Index 7, commitIndex 7[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 7[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 7, len(Entries) = 1, lastIndex 8[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 7, lastIndex 8[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 7, len(m.Entry) 1, resp.Index 8, commitIndex 7[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 8[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 8[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 8, len(Entries) = 0, lastIndex 8[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 7, lastIndex 8[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 8, len(m.Entry) 0, resp.Index 8, commitIndex 8[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 8[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 8, len(Entries) = 1, lastIndex 9[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 8, lastIndex 9[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 8, len(m.Entry) 1, resp.Index 9, commitIndex 8[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 9[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 9[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 9, len(Entries) = 0, lastIndex 9[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 8, lastIndex 9[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 9, len(m.Entry) 0, resp.Index 9, commitIndex 9[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 9[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 9, len(Entries) = 1, lastIndex 10[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 9, lastIndex 10[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 9, len(m.Entry) 1, resp.Index 10, commitIndex 9[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 10[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 10[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 10, len(Entries) = 0, lastIndex 10[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 9, lastIndex 10[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 10, len(m.Entry) 0, resp.Index 10, commitIndex 10[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 10[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 10, len(Entries) = 1, lastIndex 11[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 10, lastIndex 11[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 10, len(m.Entry) 1, resp.Index 11, commitIndex 10[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 11[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 11[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 11, len(Entries) = 0, lastIndex 11[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 10, lastIndex 11[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 11, len(m.Entry) 0, resp.Index 11, commitIndex 11[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 11[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 11, len(Entries) = 1, lastIndex 12[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 11, lastIndex 12[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 11, len(m.Entry) 1, resp.Index 12, commitIndex 11[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 12[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 12[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 12, len(Entries) = 0, lastIndex 12[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 11, lastIndex 12[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 12, len(m.Entry) 0, resp.Index 12, commitIndex 12[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 12[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 12, len(Entries) = 1, lastIndex 13[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 12, lastIndex 13[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 12, len(m.Entry) 1, resp.Index 13, commitIndex 12[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 13[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 13[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 13, len(Entries) = 0, lastIndex 13[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 12, lastIndex 13[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 13, len(m.Entry) 0, resp.Index 13, commitIndex 13[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 13[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 13, len(Entries) = 1, lastIndex 14[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 13, lastIndex 14[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 13, len(m.Entry) 1, resp.Index 14, commitIndex 13[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 14[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 14[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 14, len(Entries) = 0, lastIndex 14[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 13, lastIndex 14[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 14, len(m.Entry) 0, resp.Index 14, commitIndex 14[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 14[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 14, lastIndex 15[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 14, len(Entries) = 1, lastIndex 15[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 14, len(m.Entry) 1, resp.Index 15, commitIndex 14[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 15[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 15[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 15, len(Entries) = 0, lastIndex 15[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 14, lastIndex 15[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 15, len(m.Entry) 0, resp.Index 15, commitIndex 15[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 15[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 15, len(Entries) = 1, lastIndex 16[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 15, lastIndex 16[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 15, len(m.Entry) 1, resp.Index 16, commitIndex 15[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 16[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 16[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 16, len(Entries) = 0, lastIndex 16[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 15, lastIndex 16[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 16, len(m.Entry) 0, resp.Index 16, commitIndex 16[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 16[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 16, len(Entries) = 1, lastIndex 17[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 16, lastIndex 17[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 16, len(m.Entry) 1, resp.Index 17, commitIndex 16[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 17[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 17[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 17, len(Entries) = 0, lastIndex 17[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 16, lastIndex 17[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 17, len(m.Entry) 0, resp.Index 17, commitIndex 17[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 17[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 17, len(Entries) = 1, lastIndex 18[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 17, lastIndex 18[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 17, len(m.Entry) 1, resp.Index 18, commitIndex 17[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 18[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 18[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 17, lastIndex 18[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 18, len(Entries) = 0, lastIndex 18[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 18, len(m.Entry) 0, resp.Index 18, commitIndex 18[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 18[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 18, len(Entries) = 1, lastIndex 19[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 18, lastIndex 19[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 18, len(m.Entry) 1, resp.Index 19, commitIndex 18[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 19[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 19[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 19, len(Entries) = 0, lastIndex 19[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 18, lastIndex 19[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 19, len(m.Entry) 0, resp.Index 19, commitIndex 19[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 19[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 19, len(Entries) = 1, lastIndex 20[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 19, lastIndex 20[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 19, len(m.Entry) 1, resp.Index 20, commitIndex 19[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 20[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 20[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 20, len(Entries) = 0, lastIndex 20[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 19, lastIndex 20[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 20, len(m.Entry) 0, resp.Index 20, commitIndex 20[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 20[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 20, lastIndex 21[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 20, len(Entries) = 1, lastIndex 21[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 20, len(m.Entry) 1, resp.Index 21, commitIndex 20[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 21[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 21[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 21, len(Entries) = 0, lastIndex 21[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 20, lastIndex 21[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 21, len(m.Entry) 0, resp.Index 21, commitIndex 21[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 21[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 21, len(Entries) = 1, lastIndex 22[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 21, lastIndex 22[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 21, len(m.Entry) 1, resp.Index 22, commitIndex 21[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 22[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 22[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 22, len(Entries) = 0, lastIndex 22[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 21, lastIndex 22[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 22, len(m.Entry) 0, resp.Index 22, commitIndex 22[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 22[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 22, len(Entries) = 1, lastIndex 23[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 22, lastIndex 23[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 22, len(m.Entry) 1, resp.Index 23, commitIndex 22[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 23[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 23[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 23, len(Entries) = 0, lastIndex 23[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 22, lastIndex 23[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 23, len(m.Entry) 0, resp.Index 23, commitIndex 23[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 23[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 23, len(Entries) = 1, lastIndex 24[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 23, lastIndex 24[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 23, len(m.Entry) 1, resp.Index 24, commitIndex 23[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 24[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 24[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 24, len(Entries) = 0, lastIndex 24[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 23, lastIndex 24[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 24, len(m.Entry) 0, resp.Index 24, commitIndex 24[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 24[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 24, len(Entries) = 1, lastIndex 25[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 24, lastIndex 25[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 24, len(m.Entry) 1, resp.Index 25, commitIndex 24[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 25[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 25[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 25, len(Entries) = 0, lastIndex 25[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 24, lastIndex 25[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 25, len(m.Entry) 0, resp.Index 25, commitIndex 25[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 25[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 25, len(Entries) = 1, lastIndex 26[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 25, lastIndex 26[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 25, len(m.Entry) 1, resp.Index 26, commitIndex 25[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 26[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 26[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 26, len(Entries) = 0, lastIndex 26[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 25, lastIndex 26[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 26, len(m.Entry) 0, resp.Index 26, commitIndex 26[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 26[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 26, len(Entries) = 1, lastIndex 27[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 26, lastIndex 27[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 26, len(m.Entry) 1, resp.Index 27, commitIndex 26[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 27[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 27[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 27, len(Entries) = 0, lastIndex 27[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 26, lastIndex 27[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 27, len(m.Entry) 0, resp.Index 27, commitIndex 27[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 27[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 27, len(Entries) = 1, lastIndex 28[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 27, lastIndex 28[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 27, len(m.Entry) 1, resp.Index 28, commitIndex 27[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 28[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 28[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 28, len(Entries) = 0, lastIndex 28[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 27, lastIndex 28[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 28, len(m.Entry) 0, resp.Index 28, commitIndex 28[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 28[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 28, lastIndex 29[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 28, len(Entries) = 1, lastIndex 29[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 28, len(m.Entry) 1, resp.Index 29, commitIndex 28[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 29[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 29[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 29, len(Entries) = 0, lastIndex 29[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 28, lastIndex 29[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 29, len(m.Entry) 0, resp.Index 29, commitIndex 29[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 29[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 29, len(Entries) = 1, lastIndex 30[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 29, lastIndex 30[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 29, len(m.Entry) 1, resp.Index 30, commitIndex 29[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 30[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 30[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 30, len(Entries) = 0, lastIndex 30[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 29, lastIndex 30[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 30, len(m.Entry) 0, resp.Index 30, commitIndex 30[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 30[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 30, len(Entries) = 1, lastIndex 31[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 30, lastIndex 31[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 30, len(m.Entry) 1, resp.Index 31, commitIndex 30[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 31[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 31[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 31, len(Entries) = 0, lastIndex 31[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 30, lastIndex 31[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 31, len(m.Entry) 0, resp.Index 31, commitIndex 31[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 31[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 31, len(Entries) = 1, lastIndex 32[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 31, lastIndex 32[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 31, len(m.Entry) 1, resp.Index 32, commitIndex 31[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 32[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 32[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 32, len(Entries) = 0, lastIndex 32[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 31, lastIndex 32[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 32, len(m.Entry) 0, resp.Index 32, commitIndex 32[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 32[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 32, len(Entries) = 1, lastIndex 33[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 32, lastIndex 33[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 32, len(m.Entry) 1, resp.Index 33, commitIndex 32[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 33[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 33[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 33, len(Entries) = 0, lastIndex 33[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 32, lastIndex 33[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 33, len(m.Entry) 0, resp.Index 33, commitIndex 33[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 33[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 33, len(Entries) = 1, lastIndex 34[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 33, lastIndex 34[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 33, len(m.Entry) 1, resp.Index 34, commitIndex 33[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 34[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 34[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 34, len(Entries) = 0, lastIndex 34[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 33, lastIndex 34[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 34, len(m.Entry) 0, resp.Index 34, commitIndex 34[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 34[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 34, len(Entries) = 1, lastIndex 35[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 34, lastIndex 35[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 34, len(m.Entry) 1, resp.Index 35, commitIndex 34[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 35[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 35[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 35, len(Entries) = 0, lastIndex 35[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 34, lastIndex 35[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 35, len(m.Entry) 0, resp.Index 35, commitIndex 35[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 35[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 35, len(Entries) = 1, lastIndex 36[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 35, lastIndex 36[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 35, len(m.Entry) 1, resp.Index 36, commitIndex 35[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 36[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 36[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 35, lastIndex 36[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 36, len(Entries) = 0, lastIndex 36[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 36, len(m.Entry) 0, resp.Index 36, commitIndex 36[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 36[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 36, len(Entries) = 1, lastIndex 37[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 36, lastIndex 37[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 36, len(m.Entry) 1, resp.Index 37, commitIndex 36[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 37[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 37[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 37, len(Entries) = 0, lastIndex 37[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 36, lastIndex 37[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 37, len(m.Entry) 0, resp.Index 37, commitIndex 37[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 37[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 37, len(Entries) = 1, lastIndex 38[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 37, lastIndex 38[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 37, len(m.Entry) 1, resp.Index 38, commitIndex 37[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 38[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 38[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 38, len(Entries) = 0, lastIndex 38[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 37, lastIndex 38[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 38, len(m.Entry) 0, resp.Index 38, commitIndex 38[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 38[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 38, len(Entries) = 1, lastIndex 39[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 38, lastIndex 39[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 38, len(m.Entry) 1, resp.Index 39, commitIndex 38[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 39[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 39[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 39, len(Entries) = 0, lastIndex 39[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 38, lastIndex 39[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 39, len(m.Entry) 0, resp.Index 39, commitIndex 39[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 39[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 39, len(Entries) = 1, lastIndex 40[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 39, lastIndex 40[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 39, len(m.Entry) 1, resp.Index 40, commitIndex 39[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 40[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 40[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 39, lastIndex 40[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 40, len(Entries) = 0, lastIndex 40[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 40, len(m.Entry) 0, resp.Index 40, commitIndex 40[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 40[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 40, len(Entries) = 1, lastIndex 41[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 40, lastIndex 41[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 40, len(m.Entry) 1, resp.Index 41, commitIndex 40[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 41[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 41[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 40, lastIndex 41[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 41, len(Entries) = 0, lastIndex 41[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 41, len(m.Entry) 0, resp.Index 41, commitIndex 41[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 41[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 41, lastIndex 42[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 41, len(Entries) = 1, lastIndex 42[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 41, len(m.Entry) 1, resp.Index 42, commitIndex 41[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 42[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 42[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 42, len(Entries) = 0, lastIndex 42[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 41, lastIndex 42[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 42, len(m.Entry) 0, resp.Index 42, commitIndex 42[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 42[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 42, len(Entries) = 1, lastIndex 43[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 42, lastIndex 43[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 42, len(m.Entry) 1, resp.Index 43, commitIndex 42[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 43[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 43[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 42, lastIndex 43[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 43, len(Entries) = 0, lastIndex 43[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 43, len(m.Entry) 0, resp.Index 43, commitIndex 43[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 43[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 43, len(Entries) = 1, lastIndex 44[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 43, lastIndex 44[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 43, len(m.Entry) 1, resp.Index 44, commitIndex 43[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 44[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 44[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 44, len(Entries) = 0, lastIndex 44[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 43, lastIndex 44[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 44, len(m.Entry) 0, resp.Index 44, commitIndex 44[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 44[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 44, len(Entries) = 1, lastIndex 45[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 44, lastIndex 45[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 44, len(m.Entry) 1, resp.Index 45, commitIndex 44[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 45[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 45[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 45, len(Entries) = 0, lastIndex 45[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 44, lastIndex 45[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 45, len(m.Entry) 0, resp.Index 45, commitIndex 45[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 45[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 45, len(Entries) = 1, lastIndex 46[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 45, lastIndex 46[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 45, len(m.Entry) 1, resp.Index 46, commitIndex 45[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 46[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 46[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 45, lastIndex 46[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 46, len(Entries) = 0, lastIndex 46[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 46, len(m.Entry) 0, resp.Index 46, commitIndex 46[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 46[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 46, lastIndex 47[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 46, len(Entries) = 1, lastIndex 47[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 46, len(m.Entry) 1, resp.Index 47, commitIndex 46[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 47[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 47[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 47, len(Entries) = 0, lastIndex 47[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 46, lastIndex 47[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 47, len(m.Entry) 0, resp.Index 47, commitIndex 47[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 47[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 47, len(Entries) = 1, lastIndex 48[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 47, lastIndex 48[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 47, len(m.Entry) 1, resp.Index 48, commitIndex 47[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 48[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 48[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 48, len(Entries) = 0, lastIndex 48[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 47, lastIndex 48[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 48, len(m.Entry) 0, resp.Index 48, commitIndex 48[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 48[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 48, len(Entries) = 1, lastIndex 49[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 48, lastIndex 49[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 48, len(m.Entry) 1, resp.Index 49, commitIndex 48[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 49[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 49[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 49, len(Entries) = 0, lastIndex 49[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 48, lastIndex 49[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 49, len(m.Entry) 0, resp.Index 49, commitIndex 49[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 49[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 49, len(Entries) = 1, lastIndex 50[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 49, lastIndex 50[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 49, len(m.Entry) 1, resp.Index 50, commitIndex 49[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 50[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 50[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 50, len(Entries) = 0, lastIndex 50[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 49, lastIndex 50[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 50, len(m.Entry) 0, resp.Index 50, commitIndex 50[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 50[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 50, len(Entries) = 1, lastIndex 51[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 50, lastIndex 51[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 50, len(m.Entry) 1, resp.Index 51, commitIndex 50[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 51[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 51[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 51, len(Entries) = 0, lastIndex 51[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 50, lastIndex 51[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 51, len(m.Entry) 0, resp.Index 51, commitIndex 51[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 51[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 51, len(Entries) = 1, lastIndex 52[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 51, lastIndex 52[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 51, len(m.Entry) 1, resp.Index 52, commitIndex 51[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 52[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 52[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 52, len(Entries) = 0, lastIndex 52[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 51, lastIndex 52[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 52, len(m.Entry) 0, resp.Index 52, commitIndex 52[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 52[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 52, len(Entries) = 1, lastIndex 53[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 52, lastIndex 53[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 52, len(m.Entry) 1, resp.Index 53, commitIndex 52[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 53[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 53[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 53, len(Entries) = 0, lastIndex 53[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 52, lastIndex 53[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 53, len(m.Entry) 0, resp.Index 53, commitIndex 53[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 53[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 53, len(Entries) = 1, lastIndex 54[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 53, lastIndex 54[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 53, len(m.Entry) 1, resp.Index 54, commitIndex 53[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 54[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 54[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 54, len(Entries) = 0, lastIndex 54[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 53, lastIndex 54[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 54, len(m.Entry) 0, resp.Index 54, commitIndex 54[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 54[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 54, len(Entries) = 1, lastIndex 55[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 54, lastIndex 55[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 54, len(m.Entry) 1, resp.Index 55, commitIndex 54[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 55[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 55[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 55, len(Entries) = 0, lastIndex 55[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 54, lastIndex 55[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 55, len(m.Entry) 0, resp.Index 55, commitIndex 55[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 55[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 55, len(Entries) = 1, lastIndex 56[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 55, lastIndex 56[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 55, len(m.Entry) 1, resp.Index 56, commitIndex 55[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 56[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 56[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 56, len(Entries) = 0, lastIndex 56[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 55, lastIndex 56[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 56, len(m.Entry) 0, resp.Index 56, commitIndex 56[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 56[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 56, len(Entries) = 1, lastIndex 57[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 56, lastIndex 57[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 56, len(m.Entry) 1, resp.Index 57, commitIndex 56[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 57[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 57[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 57, len(Entries) = 0, lastIndex 57[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 56, lastIndex 57[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 57, len(m.Entry) 0, resp.Index 57, commitIndex 57[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 57[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 57, lastIndex 58[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 57, len(Entries) = 1, lastIndex 58[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 57, len(m.Entry) 1, resp.Index 58, commitIndex 57[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 58[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 58[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 58, len(Entries) = 0, lastIndex 58[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 57, lastIndex 58[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 58, len(m.Entry) 0, resp.Index 58, commitIndex 58[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 58[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 58, len(Entries) = 1, lastIndex 59[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 58, lastIndex 59[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 58, len(m.Entry) 1, resp.Index 59, commitIndex 58[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 59[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 59[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 59, len(Entries) = 0, lastIndex 59[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 58, lastIndex 59[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 59, len(m.Entry) 0, resp.Index 59, commitIndex 59[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 59[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 59, len(Entries) = 1, lastIndex 60[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 59, lastIndex 60[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 59, len(m.Entry) 1, resp.Index 60, commitIndex 59[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 60[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 60[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 60, len(Entries) = 0, lastIndex 60[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 59, lastIndex 60[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 60, len(m.Entry) 0, resp.Index 60, commitIndex 60[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 60[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 60, len(Entries) = 1, lastIndex 61[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 60, lastIndex 61[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 60, len(m.Entry) 1, resp.Index 61, commitIndex 60[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 61[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 61[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 61, len(Entries) = 0, lastIndex 61[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 60, lastIndex 61[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 61, len(m.Entry) 0, resp.Index 61, commitIndex 61[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 61[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 61, len(Entries) = 1, lastIndex 62[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 61, lastIndex 62[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 61, len(m.Entry) 1, resp.Index 62, commitIndex 61[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 62[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 62[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 62, len(Entries) = 0, lastIndex 62[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 61, lastIndex 62[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 62, len(m.Entry) 0, resp.Index 62, commitIndex 62[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 62[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 62, len(Entries) = 1, lastIndex 63[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 62, lastIndex 63[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 62, len(m.Entry) 1, resp.Index 63, commitIndex 62[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 63[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 63[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 63, len(Entries) = 0, lastIndex 63[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 62, lastIndex 63[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 63, len(m.Entry) 0, resp.Index 63, commitIndex 63[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 63[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 63, len(Entries) = 1, lastIndex 64[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 63, lastIndex 64[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 63, len(m.Entry) 1, resp.Index 64, commitIndex 63[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 64[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 64[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 64, len(Entries) = 0, lastIndex 64[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 63, lastIndex 64[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 64, len(m.Entry) 0, resp.Index 64, commitIndex 64[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 64[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 64, len(Entries) = 1, lastIndex 65[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 64, lastIndex 65[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 64, len(m.Entry) 1, resp.Index 65, commitIndex 64[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 65[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 65[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 65, len(Entries) = 0, lastIndex 65[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 64, lastIndex 65[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 65, len(m.Entry) 0, resp.Index 65, commitIndex 65[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 65[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 65, lastIndex 66[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 65, len(Entries) = 1, lastIndex 66[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 65, len(m.Entry) 1, resp.Index 66, commitIndex 65[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 66[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 66[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 66, len(Entries) = 0, lastIndex 66[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 65, lastIndex 66[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 66, len(m.Entry) 0, resp.Index 66, commitIndex 66[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 66[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 66, len(Entries) = 1, lastIndex 67[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 66, lastIndex 67[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 66, len(m.Entry) 1, resp.Index 67, commitIndex 66[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 67[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 67[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 67, len(Entries) = 0, lastIndex 67[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 66, lastIndex 67[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 67, len(m.Entry) 0, resp.Index 67, commitIndex 67[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 67[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 67, len(Entries) = 1, lastIndex 68[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 67, lastIndex 68[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 67, len(m.Entry) 1, resp.Index 68, commitIndex 67[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 68[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 68[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 68, len(Entries) = 0, lastIndex 68[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 67, lastIndex 68[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 68, len(m.Entry) 0, resp.Index 68, commitIndex 68[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 68[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 68, lastIndex 69[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 68, len(Entries) = 1, lastIndex 69[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 68, len(m.Entry) 1, resp.Index 69, commitIndex 68[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 69[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 69[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 69, len(Entries) = 0, lastIndex 69[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 68, lastIndex 69[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 69, len(m.Entry) 0, resp.Index 69, commitIndex 69[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 69[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 69, len(Entries) = 1, lastIndex 70[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 69, lastIndex 70[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 69, len(m.Entry) 1, resp.Index 70, commitIndex 69[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 70[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 70[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 70, len(Entries) = 0, lastIndex 70[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 69, lastIndex 70[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 70, len(m.Entry) 0, resp.Index 70, commitIndex 70[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 70[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 70, len(Entries) = 1, lastIndex 71[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 70, lastIndex 71[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 70, len(m.Entry) 1, resp.Index 71, commitIndex 70[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 71[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 71[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 71, len(Entries) = 0, lastIndex 71[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 70, lastIndex 71[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 71, len(m.Entry) 0, resp.Index 71, commitIndex 71[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 71[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 71, len(Entries) = 1, lastIndex 72[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 71, lastIndex 72[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 71, len(m.Entry) 1, resp.Index 72, commitIndex 71[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 72[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 72[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 71, lastIndex 72[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 72, len(Entries) = 0, lastIndex 72[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 72, len(m.Entry) 0, resp.Index 72, commitIndex 72[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 72[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 72, len(Entries) = 1, lastIndex 73[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 72, lastIndex 73[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 72, len(m.Entry) 1, resp.Index 73, commitIndex 72[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 73[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 73[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 73, len(Entries) = 0, lastIndex 73[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 72, lastIndex 73[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 73, len(m.Entry) 0, resp.Index 73, commitIndex 73[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 73[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 73, len(Entries) = 1, lastIndex 74[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 73, lastIndex 74[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 73, len(m.Entry) 1, resp.Index 74, commitIndex 73[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 74[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 74[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 73, lastIndex 74[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 74, len(Entries) = 0, lastIndex 74[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 74, len(m.Entry) 0, resp.Index 74, commitIndex 74[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 74[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 74, len(Entries) = 1, lastIndex 75[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 74, lastIndex 75[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 74, len(m.Entry) 1, resp.Index 75, commitIndex 74[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 75[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 75[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 75, len(Entries) = 0, lastIndex 75[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 74, lastIndex 75[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 75, len(m.Entry) 0, resp.Index 75, commitIndex 75[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 75[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 75, lastIndex 76[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 75, len(Entries) = 1, lastIndex 76[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 75, len(m.Entry) 1, resp.Index 76, commitIndex 75[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 76[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 76[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 76, len(Entries) = 0, lastIndex 76[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 75, lastIndex 76[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 76, len(m.Entry) 0, resp.Index 76, commitIndex 76[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 76[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 76, len(Entries) = 1, lastIndex 77[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 76, lastIndex 77[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 76, len(m.Entry) 1, resp.Index 77, commitIndex 76[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 77[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 77[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 77, len(Entries) = 0, lastIndex 77[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 76, lastIndex 77[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 77, len(m.Entry) 0, resp.Index 77, commitIndex 77[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 77[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 77, len(Entries) = 1, lastIndex 78[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 77, lastIndex 78[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 77, len(m.Entry) 1, resp.Index 78, commitIndex 77[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 78[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 78[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 77, lastIndex 78[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 78, len(Entries) = 0, lastIndex 78[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 78, len(m.Entry) 0, resp.Index 78, commitIndex 78[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 78[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 78, len(Entries) = 1, lastIndex 79[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 78, lastIndex 79[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 78, len(m.Entry) 1, resp.Index 79, commitIndex 78[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 79[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 79[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 79, len(Entries) = 0, lastIndex 79[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 78, lastIndex 79[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 79, len(m.Entry) 0, resp.Index 79, commitIndex 79[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 79[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 79, len(Entries) = 1, lastIndex 80[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 79, lastIndex 80[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 79, len(m.Entry) 1, resp.Index 80, commitIndex 79[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 80[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 80[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 80, len(Entries) = 0, lastIndex 80[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 79, lastIndex 80[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 80, len(m.Entry) 0, resp.Index 80, commitIndex 80[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 80[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 80, len(Entries) = 1, lastIndex 81[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 80, lastIndex 81[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 80, len(m.Entry) 1, resp.Index 81, commitIndex 80[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 81[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 81[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 81, len(Entries) = 0, lastIndex 81[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 80, lastIndex 81[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 81, len(m.Entry) 0, resp.Index 81, commitIndex 81[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 81[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 81, len(Entries) = 1, lastIndex 82[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 81, lastIndex 82[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 81, len(m.Entry) 1, resp.Index 82, commitIndex 81[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 82[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 82[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 82, len(Entries) = 0, lastIndex 82[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 81, lastIndex 82[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 82, len(m.Entry) 0, resp.Index 82, commitIndex 82[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 82[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 82, len(Entries) = 1, lastIndex 83[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 82, lastIndex 83[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 82, len(m.Entry) 1, resp.Index 83, commitIndex 82[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 83[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 83[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 83, len(Entries) = 0, lastIndex 83[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 82, lastIndex 83[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 83, len(m.Entry) 0, resp.Index 83, commitIndex 83[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 83[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 83, len(Entries) = 1, lastIndex 84[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 83, lastIndex 84[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 83, len(m.Entry) 1, resp.Index 84, commitIndex 83[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 84[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 84[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 84, len(Entries) = 0, lastIndex 84[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 83, lastIndex 84[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 84, len(m.Entry) 0, resp.Index 84, commitIndex 84[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 84[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 84, len(Entries) = 1, lastIndex 85[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 84, lastIndex 85[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 84, len(m.Entry) 1, resp.Index 85, commitIndex 84[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 85[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 85[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 85, len(Entries) = 0, lastIndex 85[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 84, lastIndex 85[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 85, len(m.Entry) 0, resp.Index 85, commitIndex 85[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 85[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 85, len(Entries) = 1, lastIndex 86[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 85, lastIndex 86[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 85, len(m.Entry) 1, resp.Index 86, commitIndex 85[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 86[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 86[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 85, lastIndex 86[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 86, len(Entries) = 0, lastIndex 86[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 86, len(m.Entry) 0, resp.Index 86, commitIndex 86[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 86[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 86, len(Entries) = 1, lastIndex 87[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 86, lastIndex 87[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 86, len(m.Entry) 1, resp.Index 87, commitIndex 86[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 87[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 87[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 87, len(Entries) = 0, lastIndex 87[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 86, lastIndex 87[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 87, len(m.Entry) 0, resp.Index 87, commitIndex 87[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 87[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 87, len(Entries) = 1, lastIndex 88[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 87, lastIndex 88[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 87, len(m.Entry) 1, resp.Index 88, commitIndex 87[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 88[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 88[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 88, len(Entries) = 0, lastIndex 88[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 87, lastIndex 88[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 88, len(m.Entry) 0, resp.Index 88, commitIndex 88[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 88[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 88, len(Entries) = 1, lastIndex 89[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 88, lastIndex 89[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 88, len(m.Entry) 1, resp.Index 89, commitIndex 88[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 89[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 89[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 89, len(Entries) = 0, lastIndex 89[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 88, lastIndex 89[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 89, len(m.Entry) 0, resp.Index 89, commitIndex 89[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 89[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 89, len(Entries) = 1, lastIndex 90[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 89, lastIndex 90[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 89, len(m.Entry) 1, resp.Index 90, commitIndex 89[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 90[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 90[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 89, lastIndex 90[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 90, len(Entries) = 0, lastIndex 90[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 90, len(m.Entry) 0, resp.Index 90, commitIndex 90[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 90[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 90, lastIndex 91[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 90, len(Entries) = 1, lastIndex 91[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 90, len(m.Entry) 1, resp.Index 91, commitIndex 90[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 91[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 91[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 91, len(Entries) = 0, lastIndex 91[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 90, lastIndex 91[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 91, len(m.Entry) 0, resp.Index 91, commitIndex 91[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 91[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 91, len(Entries) = 1, lastIndex 92[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 91, lastIndex 92[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 91, len(m.Entry) 1, resp.Index 92, commitIndex 91[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 92[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 92[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 92, len(Entries) = 0, lastIndex 92[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 91, lastIndex 92[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 92, len(m.Entry) 0, resp.Index 92, commitIndex 92[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 92[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 92, len(Entries) = 1, lastIndex 93[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 92, lastIndex 93[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 92, len(m.Entry) 1, resp.Index 93, commitIndex 92[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 93[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 93[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 92, lastIndex 93[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 93, len(Entries) = 0, lastIndex 93[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 93, len(m.Entry) 0, resp.Index 93, commitIndex 93[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 93[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 93, len(Entries) = 1, lastIndex 94[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 93, lastIndex 94[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 93, len(m.Entry) 1, resp.Index 94, commitIndex 93[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 94[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 94[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 94, len(Entries) = 0, lastIndex 94[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 93, lastIndex 94[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 94, len(m.Entry) 0, resp.Index 94, commitIndex 94[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 94[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 94, len(Entries) = 1, lastIndex 95[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 94, lastIndex 95[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 94, len(m.Entry) 1, resp.Index 95, commitIndex 94[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 95[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 95[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 95, len(Entries) = 0, lastIndex 95[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 94, lastIndex 95[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 95, len(m.Entry) 0, resp.Index 95, commitIndex 95[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 95[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 95, len(Entries) = 1, lastIndex 96[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 95, lastIndex 96[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 95, len(m.Entry) 1, resp.Index 96, commitIndex 95[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 96[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 96[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 96, len(Entries) = 0, lastIndex 96[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 95, lastIndex 96[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 96, len(m.Entry) 0, resp.Index 96, commitIndex 96[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 96[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 96, len(Entries) = 1, lastIndex 97[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 96, lastIndex 97[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 96, len(m.Entry) 1, resp.Index 97, commitIndex 96[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 97[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 97[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 96, lastIndex 97[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 97, len(Entries) = 0, lastIndex 97[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 97, len(m.Entry) 0, resp.Index 97, commitIndex 97[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 97[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 97, len(Entries) = 1, lastIndex 98[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 97, lastIndex 98[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 97, len(m.Entry) 1, resp.Index 98, commitIndex 97[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 98[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 98[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 98, len(Entries) = 0, lastIndex 98[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 97, lastIndex 98[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 98, len(m.Entry) 0, resp.Index 98, commitIndex 98[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 98[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 98, lastIndex 99[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 98, len(Entries) = 1, lastIndex 99[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 98, len(m.Entry) 1, resp.Index 99, commitIndex 98[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 99[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 99[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 99, len(Entries) = 0, lastIndex 99[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 98, lastIndex 99[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 99, len(m.Entry) 0, resp.Index 99, commitIndex 99[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 99[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 99, len(Entries) = 1, lastIndex 100[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 99, lastIndex 100[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 99, len(m.Entry) 1, resp.Index 100, commitIndex 99[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 100[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 100[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 99, lastIndex 100[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 100, len(Entries) = 0, lastIndex 100[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 100, len(m.Entry) 0, resp.Index 100, commitIndex 100[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 100[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 100, len(Entries) = 1, lastIndex 101[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 100, lastIndex 101[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 100, len(m.Entry) 1, resp.Index 101, commitIndex 100[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 101[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 101[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 101, len(Entries) = 0, lastIndex 101[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 100, lastIndex 101[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 101, len(m.Entry) 0, resp.Index 101, commitIndex 101[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 101[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 101, len(Entries) = 1, lastIndex 102[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 101, lastIndex 102[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 101, len(m.Entry) 1, resp.Index 102, commitIndex 101[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 102[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 102[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 102, len(Entries) = 0, lastIndex 102[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 101, lastIndex 102[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 102, len(m.Entry) 0, resp.Index 102, commitIndex 102[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 102[0m
+2022/05/09 20:58:02 raft.go:348: [0;37m[info] [HeartBeat] 1 to 2, committedIndex 102, lastIndex 102[0m
+2022/05/09 20:58:02 raft.go:348: [0;37m[info] [HeartBeat] 1 to 3, committedIndex 102, lastIndex 102[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 1, len(Entries) = 101, lastIndex 102[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 3 prevLogIndex 1, len(m.Entry) 101, resp.Index 102, commitIndex 102[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 3, Index = 102[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 102, len(Entries) = 1, lastIndex 103[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 102, len(Entries) = 1, lastIndex 103[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 102, len(m.Entry) 1, resp.Index 103, commitIndex 102[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 3 prevLogIndex 102, len(m.Entry) 1, resp.Index 103, commitIndex 102[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 103[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 103[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 103, len(Entries) = 0, lastIndex 103[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 102, len(Entries) = 1, lastIndex 103[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 3, Index = 103[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 103, len(m.Entry) 0, resp.Index 103, commitIndex 103[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 3 prevLogIndex 102, len(m.Entry) 1, resp.Index 103, commitIndex 103[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 103[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 3, Index = 103[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 103, len(Entries) = 1, lastIndex 104[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 103, len(Entries) = 1, lastIndex 104[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 103, len(m.Entry) 1, resp.Index 104, commitIndex 103[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 3 prevLogIndex 103, len(m.Entry) 1, resp.Index 104, commitIndex 103[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 104[0m
+2022/05/09 20:58:02 raft.go:638: [0;37m[info] [commit] 1 leader commit new entry, commitIndex 104[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 2, prevLogIndex = 104, len(Entries) = 0, lastIndex 104[0m
+2022/05/09 20:58:02 raft.go:293: [0;37m[info] [AppendEntry Request]1 to 3, prevLogIndex = 103, len(Entries) = 1, lastIndex 104[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 3, Index = 104[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 2 prevLogIndex 104, len(m.Entry) 0, resp.Index 104, commitIndex 104[0m
+2022/05/09 20:58:02 raft.go:616: [0;37m[info] [handle AppendEntry] peer 3 prevLogIndex 103, len(m.Entry) 1, resp.Index 104, commitIndex 104[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 2, Index = 104[0m
+2022/05/09 20:58:02 raft.go:623: [0;37m[info] [AppendEntry Response]from 3, Index = 104[0m
+--- PASS: TestSlowNodeRestore2C (0.01s)
+=== RUN   TestRawNodeRestartFromSnapshot2C
+2022/05/09 20:58:02 log.go:86: [0;37m[info] {newLog} firstIndex 3, lastIndex 3, len(entries) 1, committed 3[0m
+2022/05/09 20:58:02 rawnode.go:188: [0;37m[info] 1 ready: {<nil> {0 0 0 {} [] 0} [] {[] <nil> {} [] 0} [{EntryNormal 1 3 [102 111 111] {} [] 0}] []}[0m
+2022/05/09 20:58:02 rawnode.go:223: [0;37m[info] [Advance] 1[0m
+2022/05/09 20:58:02 rawnode.go:224: [0;37m[info] [maybeCompact] 1 newFirst 3, len(entries) 1[0m
+--- PASS: TestRawNodeRestartFromSnapshot2C (0.00s)
+PASS
+ok  	github.com/pingcap-incubator/tinykv/raft	0.137s
+GO111MODULE=on go test -v --count=1 --parallel=1 -p=1 ./kv/test_raftstore -run ^TestOneSnapshot2C|| true
+=== RUN   TestOneSnapshot2C
+--- PASS: TestOneSnapshot2C (2.94s)
+PASS
+ok  	github.com/pingcap-incubator/tinykv/kv/test_raftstore	3.119s
+GO111MODULE=on go test -v --count=1 --parallel=1 -p=1 ./kv/test_raftstore -run ^TestSnapshotRecover2C|| true
+=== RUN   TestSnapshotRecover2C
+--- PASS: TestSnapshotRecover2C (30.18s)
+PASS
+ok  	github.com/pingcap-incubator/tinykv/kv/test_raftstore	30.619s
+GO111MODULE=on go test -v --count=1 --parallel=1 -p=1 ./kv/test_raftstore -run ^TestSnapshotRecoverManyClients2C|| true
+=== RUN   TestSnapshotRecoverManyClients2C
+--- PASS: TestSnapshotRecoverManyClients2C (63.47s)
+PASS
+ok  	github.com/pingcap-incubator/tinykv/kv/test_raftstore	64.131s
+GO111MODULE=on go test -v --count=1 --parallel=1 -p=1 ./kv/test_raftstore -run ^TestSnapshotUnreliable2C|| true
+=== RUN   TestSnapshotUnreliable2C
+--- PASS: TestSnapshotUnreliable2C (37.62s)
+PASS
+ok  	github.com/pingcap-incubator/tinykv/kv/test_raftstore	38.249s
+GO111MODULE=on go test -v --count=1 --parallel=1 -p=1 ./kv/test_raftstore -run ^TestSnapshotUnreliableRecover2C|| true
+=== RUN   TestSnapshotUnreliableRecover2C
+--- PASS: TestSnapshotUnreliableRecover2C (38.83s)
+PASS
+ok  	github.com/pingcap-incubator/tinykv/kv/test_raftstore	39.260s
+GO111MODULE=on go test -v --count=1 --parallel=1 -p=1 ./kv/test_raftstore -run ^TestSnapshotUnreliableRecoverConcurrentPartition2C|| true
+=== RUN   TestSnapshotUnreliableRecoverConcurrentPartition2C
+--- PASS: TestSnapshotUnreliableRecoverConcurrentPartition2C (32.69s)
+PASS
+ok  	github.com/pingcap-incubator/tinykv/kv/test_raftstore	33.162s
+rm -rf /tmp/*test-raftstore*

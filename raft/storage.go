@@ -117,7 +117,7 @@ func (ms *MemoryStorage) Entries(lo, hi uint64) ([]pb.Entry, error) {
 		return nil, ErrCompacted
 	}
 	if hi > ms.lastIndex()+1 {
-		log.Panicf("entries' hi(%d) is out of bound lastindex(%d)", hi, ms.lastIndex())
+		log.Panicf("entries' hi(%d) is test_result of bound lastindex(%d)", hi, ms.lastIndex())
 	}
 
 	ents := ms.ents[lo-offset : hi-offset]
@@ -202,7 +202,7 @@ func (ms *MemoryStorage) CreateSnapshot(i uint64, cs *pb.ConfState, data []byte)
 
 	offset := ms.ents[0].Index
 	if i > ms.lastIndex() {
-		log.Panicf("snapshot %d is out of bound lastindex(%d)", i, ms.lastIndex())
+		log.Panicf("snapshot %d is test_result of bound lastindex(%d)", i, ms.lastIndex())
 	}
 
 	ms.snapshot.Metadata.Index = i
@@ -225,7 +225,7 @@ func (ms *MemoryStorage) Compact(compactIndex uint64) error {
 		return ErrCompacted
 	}
 	if compactIndex > ms.lastIndex() {
-		log.Panicf("compact %d is out of bound lastindex(%d)", compactIndex, ms.lastIndex())
+		log.Panicf("compact %d is test_result of bound lastindex(%d)", compactIndex, ms.lastIndex())
 	}
 
 	i := compactIndex - offset

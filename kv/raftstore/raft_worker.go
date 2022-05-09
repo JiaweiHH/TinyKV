@@ -45,8 +45,10 @@ func (rw *raftWorker) run(closeCh <-chan struct{}, wg *sync.WaitGroup) {
 		for i := 0; i < pending; i++ {
 			msgs = append(msgs, <-rw.raftCh)
 		}
-		peerStateMap := make(map[uint64]*peerState)
+		peerStateMap := make(map[uint64]*peerState) // 缓存 RegionId 和 peer 的映射
 		for _, msg := range msgs {
+			// 找到每个消息指定的 Region 在 RaftStore 上对应的 Peer
+			// 然后将消息告诉 Peer，Peer.HandleMsg 会对消息进行处理
 			peerState := rw.getPeerState(peerStateMap, msg.RegionID)
 			if peerState == nil {
 				continue
@@ -54,6 +56,7 @@ func (rw *raftWorker) run(closeCh <-chan struct{}, wg *sync.WaitGroup) {
 			newPeerMsgHandler(peerState.peer, rw.ctx).HandleMsg(msg)
 		}
 		for _, peerState := range peerStateMap {
+			// 处理每个 Peer 中 RawNode 产生的 Ready 消息
 			newPeerMsgHandler(peerState.peer, rw.ctx).HandleRaftReady()
 		}
 	}

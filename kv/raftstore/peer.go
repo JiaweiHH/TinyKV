@@ -85,7 +85,7 @@ type peer struct {
 	// (Used in 2B)
 	proposals []*proposal
 
-	// Index of last scheduled compacted raft log.
+	// Index of last scheduled compacted raft log.（上一次日志压缩最后一条日志的下一条日志索引）
 	// (Used in 2C)
 	LastCompactedIdx uint64
 
@@ -370,7 +370,7 @@ func (p *peer) sendRaftMessage(msg eraftpb.Message, trans Transport) error {
 	if toPeer == nil {
 		return fmt.Errorf("failed to lookup recipient peer %v in region %v", msg.To, p.regionId)
 	}
-	log.Debugf("%v, send raft msg %v from %v to %v", p.Tag, msg.MsgType, fromPeer, toPeer)
+	log.Debugf("%v, send raft msg %v from %v to %v, prevLogIndex %d, len(Entries) %d", p.Tag, msg.MsgType, fromPeer, toPeer, msg.Index, len(msg.Entries))
 
 	sendMsg.FromPeer = &fromPeer
 	sendMsg.ToPeer = toPeer

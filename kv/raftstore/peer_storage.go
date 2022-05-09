@@ -127,22 +127,27 @@ func (ps *PeerStorage) Entries(low, high uint64) ([]eraftpb.Entry, error) {
 }
 
 func (ps *PeerStorage) Term(idx uint64) (uint64, error) {
+	// 1. idx == truncatedIndex
 	if idx == ps.truncatedIndex() {
 		return ps.truncatedTerm(), nil
 	}
+	// 2. idx < truncatedIndex || idx == lastIndex
 	if err := ps.checkRange(idx, idx+1); err != nil {
 		return 0, err
 	}
+	// 3. 快照后面第一条日志的任期和最后一条日志的任期相同，直接返回快照后面第一条日志的任期
 	if ps.truncatedTerm() == ps.raftState.LastTerm || idx == ps.raftState.LastIndex {
 		return ps.raftState.LastTerm, nil
 	}
 	var entry eraftpb.Entry
+	// 4. 上述情况都不是，需要去 DB 中读取
 	if err := engine_util.GetMeta(ps.Engines.Raft, meta.RaftLogKey(ps.region.Id, idx), &entry); err != nil {
 		return 0, err
 	}
 	return entry.Term, nil
 }
 
+// LastIndex 返回已经 stabled 的最大日志索引
 func (ps *PeerStorage) LastIndex() (uint64, error) {
 	return ps.raftState.LastIndex, nil
 }
@@ -212,7 +217,7 @@ func (ps *PeerStorage) checkRange(low, high uint64) error {
 	} else if low <= ps.truncatedIndex() {
 		return raft.ErrCompacted
 	} else if high > ps.raftState.LastIndex+1 {
-		return errors.Errorf("entries' high %d is out of bound, lastIndex %d",
+		return errors.Errorf("entries' high %d is test_result of bound, lastIndex %d",
 			high, ps.raftState.LastIndex)
 	}
 	return nil
@@ -308,10 +313,29 @@ func ClearMeta(engines *engine_util.Engines, kvWB, raftWB *engine_util.WriteBatc
 // never be committed
 func (ps *PeerStorage) Append(entries []eraftpb.Entry, raftWB *engine_util.WriteBatch) error {
 	// Your Code Here (2B).
+	if len(entries) == 0 {
+		return nil
+	}
+	// 将所有的 Entry 都添加到 WriteBatch 中
+	for _, ent := range entries {
+		if err := raftWB.SetMeta(meta.RaftLogKey(ps.region.Id, ent.Index), &ent); err != nil {
+			log.Panic(err)
+		}
+	}
+	// 由于已经持久化的日志可能会因为冲突而被 leader 覆盖掉，对于这部分数据也需要在存储引擎中删除
+	// ......stabled -> ......truncated......currLastIndex......stabled
+	// 对于 [truncated, stabled] 中的日志本应该全都删除，但是 [truncated, currLastIndex] 中的数据只需要修改就可以了
+	currLastTerm, currLastIndex := entries[len(entries)-1].Term, entries[len(entries)-1].Index
+	prevLastIndex, _ := ps.LastIndex() // prevLastIndex 对应 RaftLog 中的 stabled
+	for index := currLastIndex + 1; index <= prevLastIndex; index++ {
+		raftWB.DeleteMeta(meta.RaftLogKey(ps.region.Id, index))
+	}
+	ps.raftState.LastTerm, ps.raftState.LastIndex = currLastTerm, currLastIndex // 更新 RaftLocalState
 	return nil
 }
 
-// Apply the peer with given snapshot
+// ApplySnapshot Apply the peer with given snapshot
+// 应用一个快照之后 RaftLog 里面只包含了快照中的日志，并且快照中的数据都是已经被应用了的
 func (ps *PeerStorage) ApplySnapshot(snapshot *eraftpb.Snapshot, kvWB *engine_util.WriteBatch, raftWB *engine_util.WriteBatch) (*ApplySnapResult, error) {
 	log.Infof("%v begin to apply snapshot", ps.Tag)
 	snapData := new(rspb.RaftSnapshotData)
@@ -323,15 +347,71 @@ func (ps *PeerStorage) ApplySnapshot(snapshot *eraftpb.Snapshot, kvWB *engine_ut
 	// and send RegionTaskApply task to region worker through ps.regionSched, also remember call ps.clearMeta
 	// and ps.clearExtraData to delete stale data
 	// Your Code Here (2C).
-	return nil, nil
+
+	// TODO 清除老旧的元数据（没有理解这里）
+	if ps.isInitialized() {
+		if err := ps.clearMeta(kvWB, raftWB); err != nil {
+			log.Panic(err)
+		}
+		ps.clearExtraData(snapData.Region)
+	}
+	// 更新 peer_storage 的内存状态，包括：
+	// 1. RaftLocalState: 已经「持久化」到DB的最后一条日志设置为快照的最后一条日志
+	// 2. RaftApplyState: 「applied」和「truncated」日志设置为快照的最后一条日志
+	// 3. snapState: SnapState_Applying
+	ps.raftState.LastIndex, ps.raftState.LastTerm = snapshot.Metadata.Index, snapshot.Metadata.Term
+	ps.applyState.AppliedIndex = snapshot.Metadata.Index
+	ps.applyState.TruncatedState.Index, ps.applyState.TruncatedState.Term = snapshot.Metadata.Index, snapshot.Metadata.Term
+	ps.snapState.StateType = snap.SnapState_Applying
+	if err := kvWB.SetMeta(meta.ApplyStateKey(ps.region.Id), ps.applyState); err != nil {
+		log.Panic(err)
+	}
+	// 发送 runner.RegionTaskApply 任务给 region worker，并等待处理完毕
+	ch := make(chan bool, 1)
+	ps.regionSched <- &runner.RegionTaskApply{
+		RegionId: ps.region.Id,
+		Notifier: ch,
+		SnapMeta: snapshot.Metadata,
+		StartKey: snapData.Region.GetStartKey(),
+		EndKey:   snapData.Region.GetEndKey(),
+	}
+	<-ch
+	log.Infof("%v end to apply snapshot, metaDataIndex %v, truncatedStateIndex %v", ps.Tag, snapshot.Metadata.Index, ps.applyState.TruncatedState.Index)
+	result := &ApplySnapResult{PrevRegion: ps.region, Region: snapData.Region}
+	meta.WriteRegionState(kvWB, snapData.Region, rspb.PeerState_Normal)
+	return result, nil
 }
 
-// Save memory states to disk.
+// SaveReadyState Save memory states to disk.
 // Do not modify ready in this function, this is a requirement to advance the ready object properly later.
+// 处理 Ready 中的 Entries 和 HardState 数据
 func (ps *PeerStorage) SaveReadyState(ready *raft.Ready) (*ApplySnapResult, error) {
 	// Hint: you may call `Append()` and `ApplySnapshot()` in this function
 	// Your Code Here (2B/2C).
-	return nil, nil
+	raftWB := &engine_util.WriteBatch{}
+	var result *ApplySnapResult
+	var err error
+	// 1. 应用快照数据
+	if !raft.IsEmptySnap(&ready.Snapshot) {
+		kvWB := &engine_util.WriteBatch{}
+		result, err = ps.ApplySnapshot(&ready.Snapshot, kvWB, raftWB)
+		kvWB.MustWriteToDB(ps.Engines.Kv)
+	}
+	// 2. 持久化新追加的日志（这里会更新到 RaftLocalState）
+	if err = ps.Append(ready.Entries, raftWB); err != nil {
+		log.Panic(err)
+	}
+	// 3. 更新 RaftLocalState::HardState（persist data）
+	if !raft.IsEmptyHardState(ready.HardState) {
+		*ps.raftState.HardState = ready.HardState
+	}
+	// 4. 将 RaftLocalState 写到存储引擎
+	if err = raftWB.SetMeta(meta.RaftStateKey(ps.region.Id), ps.raftState); err != nil {
+		log.Panic(err)
+	}
+	// 5. 原子的写入到存储引擎中
+	raftWB.MustWriteToDB(ps.Engines.Raft)
+	return result, nil
 }
 
 func (ps *PeerStorage) ClearData() {

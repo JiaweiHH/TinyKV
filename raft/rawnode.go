@@ -16,6 +16,7 @@ package raft
 
 import (
 	"errors"
+	"github.com/pingcap-incubator/tinykv/log"
 
 	pb "github.com/pingcap-incubator/tinykv/proto/pkg/eraftpb"
 )
@@ -181,7 +182,10 @@ func (rn *RawNode) Ready() Ready {
 			Commit: rn.Raft.RaftLog.committed,
 		}
 	}
-	rn.Raft.msgs = nil // 将消息传递到上层应用之后需要清空节点的消息队列
+	if !IsEmptySnap(rn.Raft.RaftLog.pendingSnapshot) {
+		rd.Snapshot = *rn.Raft.RaftLog.pendingSnapshot
+	}
+	log.Infof("%d ready: %v", rn.Raft.id, rd)
 	return rd
 }
 
@@ -189,7 +193,8 @@ func (rn *RawNode) Ready() Ready {
 func (rn *RawNode) HasReady() bool {
 	// Your Code Here (2A).
 	return len(rn.Raft.msgs) > 0 || rn.isSoftStateUpdate() || rn.isHardStateUpdate() ||
-		len(rn.Raft.RaftLog.unstableEntries()) > 0 || len(rn.Raft.RaftLog.nextEnts()) > 0
+		len(rn.Raft.RaftLog.unstableEntries()) > 0 || len(rn.Raft.RaftLog.nextEnts()) > 0 ||
+		!IsEmptySnap(rn.Raft.RaftLog.pendingSnapshot)
 }
 
 // Advance notifies the RawNode that the application has applied and saved progress in the
@@ -200,12 +205,23 @@ func (rn *RawNode) Advance(rd Ready) {
 		// 不等于 nil 说明上次执行 Ready 更新了 softState
 		rn.prevSoftSt = rd.SoftState
 	}
-	if rd.HardState.Term != None || rd.HardState.Vote != None || rd.HardState.Commit != None {
+	if !IsEmptyHardState(rd.HardState) {
 		// 检查 HardState 是否是默认值，默认值说明没有更新，此时不应该更新 prevHardSt
 		rn.prevHardSt = rd.HardState
 	}
-	rn.Raft.RaftLog.stabled += uint64(len(rd.Entries))
-	rn.Raft.RaftLog.applied += uint64(len(rd.CommittedEntries))
+	// 更新 RaftLog 状态
+	if len(rd.Entries) > 0 {
+		rn.Raft.RaftLog.stabled += uint64(len(rd.Entries))
+	}
+	if len(rd.CommittedEntries) > 0 {
+		rn.Raft.RaftLog.applied += uint64(len(rd.CommittedEntries))
+	}
+	rn.Raft.RaftLog.maybeCompact()
+	rn.Raft.RaftLog.pendingSnapshot = nil
+	rn.Raft.msgs = nil
+
+	log.Infof("[Advance] %d", rn.Raft.id)
+	log.Infof("[maybeCompact] %v newFirst %v, len(entries) %v", rn.Raft.id, rn.Raft.RaftLog.dummyIndex, len(rn.Raft.RaftLog.entries))
 }
 
 // GetProgress return the Progress of this node and its peers, if this

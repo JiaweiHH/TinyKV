@@ -24,6 +24,7 @@ import (
 
 // RaftStorage is an implementation of `Storage` (see tikv/server.go) backed by a Raft node. It is part of a Raft network.
 // By using Raft, reads and writes are consistent with other nodes in the TinyKV instance.
+// 运行在 Raft 之上的存储服务，每个 RaftStorage 都会运行一个 Raft 节点
 type RaftStorage struct {
 	engines *engine_util.Engines
 	config  *config.Config
@@ -75,6 +76,7 @@ func NewRaftStorage(conf *config.Config) *RaftStorage {
 	return &RaftStorage{engines: engines, config: conf}
 }
 
+// ctx 是从 client 角度看到的 Region 信息，RaftCmdRequest 会将这些信息当作 header
 func (rs *RaftStorage) Write(ctx *kvrpcpb.Context, batch []storage.Modify) error {
 	var reqs []*raft_cmdpb.Request
 	for _, m := range batch {

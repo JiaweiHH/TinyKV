@@ -797,7 +797,7 @@ func (t *BTree) Clone() (t2 *BTree) {
 	// This operation effectively creates three trees:
 	//   the original, shared nodes (old b.cow)
 	//   the new b.cow nodes
-	//   the new out.cow nodes
+	//   the new test_result.cow nodes
 	cow1, cow2 := *t.cow, *t.cow
 	out := *t
 	t.cow = &cow1
@@ -1054,7 +1054,7 @@ func (t *BTree) getRootLength() int {
 //
 // This call takes:
 //   O(1): when addNodesToFreelist is false, this is a single operation.
-//   O(1): when the freelist is already full, it breaks out immediately
+//   O(1): when the freelist is already full, it breaks test_result immediately
 //   O(freelist size):  when the freelist is empty and the nodes are all owned
 //       by this tree, nodes are added to the freelist until full.
 //   O(tree size):  when all nodes are owned by another tree, all nodes are
@@ -1067,7 +1067,7 @@ func (t *BTree) Clear(addNodesToFreelist bool) { // revive:disable-line:flag-par
 	t.root, t.length = nil, 0
 }
 
-// reset returns a subtree to the freelist.  It breaks out immediately if the
+// reset returns a subtree to the freelist.  It breaks test_result immediately if the
 // freelist is full, since the only benefit of iterating is to fill that
 // freelist up.  Returns true if parent reset call should continue.
 func (n *node) reset(c *copyOnWriteContext) bool {

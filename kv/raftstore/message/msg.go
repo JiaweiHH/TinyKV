@@ -11,15 +11,15 @@ type MsgType int64
 const (
 	// just a placeholder
 	MsgTypeNull MsgType = 0
-	// message to start the ticker of peer
+	// message to start the ticker of peer（启动计时器）
 	MsgTypeStart MsgType = 1
-	// message of base tick to drive the ticker
+	// message of base tick to drive the ticker（驱动计时器）
 	MsgTypeTick MsgType = 2
 	// message wraps a raft message that should be forwarded to Raft module
-	// the raft message is from peer on other store
+	// the raft message is from peer on other store（Peer 发送给别的节点的消息）
 	MsgTypeRaftMessage MsgType = 3
 	// message wraps a raft command that maybe a read/write request or admin request
-	// the raft command should be proposed to Raft module
+	// the raft command should be proposed to Raft module（提交到 Raft 的消息）
 	MsgTypeRaftCmd MsgType = 4
 	// message to trigger split region
 	// it first asks Scheduler for allocating new split region's ids, then schedules a

@@ -66,7 +66,7 @@ func CheckTransferPeer(c *check.C, op *operator.Operator, kind operator.OpKind, 
 
 // CheckTransferPeerWithLeaderTransfer checks if the operator is to transfer
 // peer between the specified source and target stores and it meanwhile
-// transfers the leader out of source store.
+// transfers the leader test_result of source store.
 func CheckTransferPeerWithLeaderTransfer(c *check.C, op *operator.Operator, kind operator.OpKind, sourceID, targetID uint64) {
 	c.Assert(op, check.NotNil)
 	c.Assert(op.Len(), check.Equals, 3)

@@ -16,6 +16,7 @@ package raft
 
 import (
 	"errors"
+	"github.com/pingcap-incubator/tinykv/log"
 	rand2 "math/rand"
 	"sort"
 	"time"
@@ -73,9 +74,9 @@ type Config struct {
 	HeartbeatTick int
 
 	// Storage is the storage for raft. raft generates entries and states to be
-	// stored in storage. raft reads the persisted entries and states out of
-	// Storage when it needs. raft reads out the previous state and configuration
-	// out of storage when restarting.
+	// stored in storage. raft reads the persisted entries and states test_result of
+	// Storage when it needs. raft reads test_result the previous state and configuration
+	// test_result of storage when restarting.
 	Storage Storage
 	// Applied is the last applied index. It should only be set when restarting
 	// raft. raft will not return entries to the application smaller or equal to
@@ -186,7 +187,10 @@ func newRaft(c *Config) *Raft {
 		heartbeatTimeout: c.HeartbeatTick, electionTimeout: c.ElectionTick,
 		heartbeatElapsed: 0, electionElapsed: 0,
 	}
-	hardState, _, _ := c.Storage.InitialState()
+	hardState, conState, _ := c.Storage.InitialState()
+	if c.peers == nil {
+		c.peers = conState.Nodes
+	}
 	rf.Term, rf.Vote = hardState.Term, hardState.Vote // Term 和 Vote 从持久化存储中读取
 	rf.resetRandomizedElectionTimeout()
 	for _, id := range c.peers {
@@ -216,6 +220,7 @@ func (r *Raft) maybeCommit() bool {
 // maybeUpdate 检查日志同步是不是一个过期的回复
 func (pr *Progress) maybeUpdate(n uint64) bool {
 	var updated bool
+	// 判断是否是过期的消息回复
 	if pr.Match < n {
 		pr.Match = n
 		pr.Next = pr.Match + 1
@@ -240,6 +245,25 @@ func (r *Raft) appendEntry(entries []*pb.Entry) {
 	r.RaftLog.appendNewEntry(entries)
 }
 
+// sendSnapshot 发送快照给别的节点
+func (r *Raft) sendSnapshot(to uint64) {
+	snapshot, err := r.RaftLog.storage.Snapshot()
+	if err != nil {
+		// 生成 Snapshot 的工作是由 region worker 异步执行的，如果 Snapshot 还没有准备好
+		// 此时会返回 ErrSnapshotTemporarilyUnavailable 错误，此时 leader 应该放弃本次 Snapshot Request
+		// 等待下一次再请求 storage 获取 snapshot（通常来说会在下一次 heartbeat response 的时候发送 snapshot）
+		return
+	}
+	r.msgs = append(r.msgs, pb.Message{
+		MsgType:  pb.MessageType_MsgSnapshot,
+		From:     r.id,
+		To:       to,
+		Term:     r.Term,
+		Snapshot: &snapshot,
+	})
+	r.Prs[to].Next = snapshot.Metadata.Index + 1
+}
+
 // sendAppend sends an append RPC with new entries (if any) and the
 // current commit index to the given peer. Returns true if a message was sent.
 func (r *Raft) sendAppend(to uint64) bool {
@@ -247,23 +271,32 @@ func (r *Raft) sendAppend(to uint64) bool {
 	// prevLogIndex 和 prevLogTerm 用来判断 leader 和 follower 的日志是否冲突
 	// 如果没有冲突的话就会将 Entries 追加或者覆盖到 follower 的日志中
 	prevLogIndex := r.Prs[to].Next - 1
-	prevLogTerm, _ := r.RaftLog.Term(prevLogIndex)
-	appendMsg := pb.Message{
-		MsgType: pb.MessageType_MsgAppend,
-		From:    r.id,
-		To:      to,
-		Term:    r.Term,
-		LogTerm: prevLogTerm,
-		Index:   prevLogIndex,
-		Entries: make([]*pb.Entry, 0),
-		Commit:  r.RaftLog.committed,
+	prevLogTerm, err := r.RaftLog.Term(prevLogIndex)
+	if err == nil {
+		// 没有错误发生，说明 prevLogIndex 的下一条日志（nextIndex）位于内存日志数组中
+		// 此时可以发送 Entries 数组给 followers
+		appendMsg := pb.Message{
+			MsgType: pb.MessageType_MsgAppend,
+			From:    r.id,
+			To:      to,
+			Term:    r.Term,
+			LogTerm: prevLogTerm,
+			Index:   prevLogIndex,
+			Entries: make([]*pb.Entry, 0),
+			Commit:  r.RaftLog.committed,
+		}
+		nextEntries := r.RaftLog.getEntries(prevLogIndex+1, 0) // 期望覆盖或者追加到 follower 上的日志集合
+		for i := range nextEntries {
+			appendMsg.Entries = append(appendMsg.Entries, &nextEntries[i])
+		}
+		r.msgs = append(r.msgs, appendMsg)
+		log.Infof("[AppendEntry Request]%d to %d, prevLogIndex = %d, len(Entries) = %d, lastIndex %v", r.id, to, prevLogIndex, len(nextEntries), r.RaftLog.LastIndex())
+		return true
 	}
-	nextEntries := r.RaftLog.getEntries(prevLogIndex+1, 0) // 期望覆盖或者追加到 follower 上的日志集合
-	for i := range nextEntries {
-		appendMsg.Entries = append(appendMsg.Entries, &nextEntries[i])
-	}
-	r.msgs = append(r.msgs, appendMsg)
-	return true
+	// 有错误，说明 nextIndex 存在于快照中，此时需要发送快照给 followers
+	r.sendSnapshot(to)
+	log.Infof("[Snapshot Request]%d to %d, prevLogIndex %v, dummyIndex %v", r.id, to, prevLogIndex, r.RaftLog.dummyIndex)
+	return false
 }
 
 // sendHeartbeat sends a heartbeat RPC to the given peer.
@@ -312,6 +345,7 @@ func (r *Raft) broadcastHeartBeat() {
 			continue
 		}
 		r.sendHeartbeat(id)
+		log.Infof("[HeartBeat] %v to %v, committedIndex %v, lastIndex %v", r.id, id, r.RaftLog.committed, r.RaftLog.LastIndex())
 	}
 	r.heartbeatElapsed = 0
 	// 等待 RawNode 取走 r.msgs 中的消息，发送心跳给别的节点
@@ -422,6 +456,8 @@ func (r *Raft) stepFollower(m pb.Message) {
 		r.handleHeartbeat(m)
 	case pb.MessageType_MsgAppend:
 		r.handleAppendEntries(m)
+	case pb.MessageType_MsgSnapshot:
+		r.handleSnapshot(m)
 	}
 }
 
@@ -438,6 +474,8 @@ func (r *Raft) stepCandidate(m pb.Message) {
 		r.handleHeartbeat(m)
 	case pb.MessageType_MsgAppend:
 		r.handleAppendEntries(m)
+	case pb.MessageType_MsgSnapshot:
+		r.handleSnapshot(m)
 	}
 }
 
@@ -468,6 +506,7 @@ func (r *Raft) handleRequestVote(m pb.Message) {
 	if (m.Term > r.Term || (m.Term == r.Term && (r.Vote == None || r.Vote == m.From))) && r.RaftLog.isUpToDate(m.Index, m.LogTerm) {
 		//【投票】1. Candidate 任期大于自己并且日志足够新
 		// 2. Candidate 任期和自己相等并且自己在当前任期内没有投过票或者已经投给了 Candidate，并且 Candidate 的日志足够新
+		r.becomeFollower(m.Term, None)
 		r.Vote = m.From
 	} else {
 		// 【拒绝投票】1. Candidate 的任期小于自己（Condition 1 不满足）
@@ -520,6 +559,7 @@ func (r *Raft) handlePropose(m pb.Message) {
 func (r *Raft) handleAppendEntries(m pb.Message) {
 	// Your Code Here (2A).
 	appendEntryResp := pb.Message{MsgType: pb.MessageType_MsgAppendResponse, From: r.id, To: m.From, Term: r.Term}
+	appendEntryResp.Reject = true
 	if m.Term >= r.Term {
 		r.becomeFollower(m.Term, m.From)
 
@@ -530,8 +570,8 @@ func (r *Raft) handleAppendEntries(m pb.Message) {
 
 			// 日志冲突优化：找到冲突任期的第一条日志，下次 leader 发送 AppendEntry 的时候会将 nextIndex 设置为 ConflictIndex
 			// 如果找不到的话就设置为 prevLogIndex 的前一个
-			appendEntryResp.Index = m.Index - 1 // 用于提示 leader prevLogIndex 的开始位置
-			if r.RaftLog.LastTerm() >= m.Index {
+			appendEntryResp.Index = r.RaftLog.LastIndex() // 用于提示 leader prevLogIndex 的开始位置
+			if r.RaftLog.LastIndex() >= m.Index {
 				conflictTerm := r.RaftLog.TermNoErr(m.Index)
 				for _, ent := range r.RaftLog.entries {
 					if ent.Term == conflictTerm {
@@ -540,13 +580,13 @@ func (r *Raft) handleAppendEntries(m pb.Message) {
 					}
 				}
 			}
-			appendEntryResp.Reject = true
+			log.Infof("[handle AppendEntry]peer %d conflict with %d, reply Index %v", r.id, m.Index, appendEntryResp.Index)
 		} else {
 			// prevLogIndex 没有冲突
 
 			if len(m.Entries) > 0 {
 				idx, newLogIndex := m.Index+1, m.Index+1
-				// 找到 follower 和 leadeer 在 new log 中出现冲突的位置
+				// 找到 follower 和 leader 在 new log 中出现冲突的位置
 				for ; idx < r.RaftLog.LastIndex() && idx <= m.Entries[len(m.Entries)-1].Index; idx++ {
 					term, _ := r.RaftLog.Term(idx)
 					if term != m.Entries[idx-newLogIndex].Term {
@@ -558,6 +598,11 @@ func (r *Raft) handleAppendEntries(m pb.Message) {
 					r.RaftLog.appendNewEntry(m.Entries[idx-(m.Index+1):]) // 并追加新的的日志
 					r.RaftLog.stabled = min(r.RaftLog.stabled, idx-1)     // 更新持久化的日志索引
 					// 注意，如果 leader 传递过来的新日志 follower 都已经有了的话就不应该对 follower 的日志进行截断
+					// 例如 ......prevLogIndex......m.Entries[len(m.Entries) - 1].Index......other entry......
+					// 与 leader 进行日志同步之后依旧保持原状
+					// 原因是，leader 可能对 follower 发送日志 1552(3)，然后此时 client 又发出了请求，leader 再次发送 1552(4)
+					// 并且 1552(4) 先被处理，然后 1552(3) 到达了，此时 1552(3) 上面的日志 follower 都已经有了，但是 1556 是最新同步的
+					// 这时候不应该删除 1556 这条日志，需要保留
 				}
 			}
 			// 更新 commitIndex
@@ -565,14 +610,17 @@ func (r *Raft) handleAppendEntries(m pb.Message) {
 				// 取当前节点「已经和 leader 同步的日志」和 leader 「已经提交日志」索引的最小值作为节点的 commitIndex
 				r.RaftLog.commit(min(m.Commit, m.Index+uint64(len(m.Entries))))
 			}
-			appendEntryResp.Index = r.RaftLog.LastIndex()  // 用于 leader 更新 Next
-			appendEntryResp.LogTerm = r.RaftLog.LastTerm() // 用于 leader 更新 committed
+			appendEntryResp.Reject = false
+			appendEntryResp.Index = m.Index + uint64(len(m.Entries))             // 用于 leader 更新 Next（存储的是下一次 AppendEntry 的 prevIndex）
+			appendEntryResp.LogTerm = r.RaftLog.TermNoErr(appendEntryResp.Index) // 用于 leader 更新 committed
+			log.Infof("[handle AppendEntry] peer %d prevLogIndex %d, len(m.Entry) %d, resp.Index %v, commitIndex %v", r.id, m.Index, len(m.Entries), appendEntryResp.Index, r.RaftLog.committed)
 		}
 	}
 	r.msgs = append(r.msgs, appendEntryResp)
 }
 
 func (r *Raft) handleAppendEntriesResponse(m pb.Message) {
+	log.Infof("[AppendEntry Response]from %d, Index = %d", m.From, m.Index)
 	if m.Reject {
 		if m.Term > r.Term {
 			// 任期大于自己，那么就变为 Follower
@@ -587,6 +635,7 @@ func (r *Raft) handleAppendEntriesResponse(m pb.Message) {
 	if r.Prs[m.From].maybeUpdate(m.Index) {
 		// 由于有新的日志被复制了，因此有可能有新的日志可以提交执行，所以判断一下
 		if r.maybeCommit() {
+			log.Infof("[commit] %v leader commit new entry, commitIndex %v", r.id, r.RaftLog.committed)
 			r.broadcastAppendEntry() // 广播更新所有 follower 的 commitIndex
 		}
 	}
@@ -624,8 +673,40 @@ func (r *Raft) handleHeartbeat(m pb.Message) {
 }
 
 // handleSnapshot handle Snapshot RPC request
+//（从 SnapshotMetadata 中恢复 Raft 的内部状态，例如 term、commit、membership information）
 func (r *Raft) handleSnapshot(m pb.Message) {
 	// Your Code Here (2C).
+	resp := pb.Message{MsgType: pb.MessageType_MsgAppendResponse, From: r.id, Term: r.Term}
+	meta := m.Snapshot.Metadata
+	if m.Term < r.Term {
+		// 1. 如果 term 小于自身的 term 直接拒绝这次快照的数据
+		resp.Reject = true
+		log.Infof("[handle snapshot] %v reject because m.Term < r.Term", r.id)
+	} else if r.RaftLog.committed >= meta.Index {
+		// 2. 如果已经提交的日志大于等于快照中的日志，也需要拒绝这次快照
+		// 因为 commit 的日志必定会被 apply，如果被快照中的日志覆盖的话就会破坏一致性
+		resp.Index = r.RaftLog.committed
+		log.Infof("[handle snapshot] %v reject snapshot", r.id)
+	} else {
+		// 3. 需要安装日志
+		r.becomeFollower(m.Term, m.From)
+		// 更新日志数据
+		r.RaftLog.dummyIndex = meta.Index + 1
+		r.RaftLog.committed = meta.Index
+		r.RaftLog.applied = meta.Index
+		r.RaftLog.stabled = meta.Index
+		r.RaftLog.pendingSnapshot = m.Snapshot
+		r.RaftLog.entries = make([]pb.Entry, 0)
+		// 更新集群配置
+		r.Prs = make(map[uint64]*Progress)
+		for _, id := range meta.ConfState.Nodes {
+			r.Prs[id] = &Progress{}
+		}
+		// 更新 response，提示 leader 更新 nextIndex
+		resp.Index = meta.Index
+		log.Infof("[handle snapshot] %v install snapshot, truncatedIndex %v, dummyIndex %v", r.id, meta.Index, r.RaftLog.dummyIndex)
+	}
+	r.msgs = append(r.msgs, resp)
 }
 
 // addNode add a new node to raft group

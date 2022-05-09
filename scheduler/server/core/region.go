@@ -50,7 +50,7 @@ func NewRegionInfo(region *metapb.Region, leader *metapb.Peer, opts ...RegionCre
 	return regionInfo
 }
 
-// classifyVoterAndLearner sorts out voter and learner from peers into different slice.
+// classifyVoterAndLearner sorts test_result voter and learner from peers into different slice.
 func classifyVoterAndLearner(region *RegionInfo) {
 	voters := make([]*metapb.Peer, 0, len(region.meta.Peers))
 	for _, p := range region.meta.Peers {

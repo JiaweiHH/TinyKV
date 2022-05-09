@@ -453,9 +453,9 @@ func TestCandidateConcede2AB(t *testing.T) {
 	tt.send(pb.Message{From: 3, To: 3, MsgType: pb.MessageType_MsgBeat})
 
 	data := []byte("force follower")
-	// send a proposal to 3 to flush out a MessageType_MsgAppend to 1
+	// send a proposal to 3 to flush test_result a MessageType_MsgAppend to 1
 	tt.send(pb.Message{From: 3, To: 3, MsgType: pb.MessageType_MsgPropose, Entries: []*pb.Entry{{Data: data}}})
-	// send heartbeat; flush out commit
+	// send heartbeat; flush test_result commit
 	tt.send(pb.Message{From: 3, To: 3, MsgType: pb.MessageType_MsgBeat})
 
 	a := tt.peers[1].(*Raft)
@@ -667,7 +667,7 @@ func TestRecvMessageType_MsgRequestVote2AB(t *testing.T) {
 		// test we're only testing MessageType_MsgRequestVote responses when the campaigning node
 		// has a different raft log compared to the recipient node.
 		// Additionally we're verifying behaviour when the recipient node has
-		// already given out its vote for its current term. We're not testing
+		// already given test_result its vote for its current term. We're not testing
 		// what the recipient node does when receiving a message with a
 		// different term number, so we simply initialize both term numbers to
 		// be the same.
@@ -810,7 +810,7 @@ func testCandidateResetTerm(t *testing.T, mt pb.MessageType) {
 }
 
 // TestDisruptiveFollower tests isolated follower,
-// with slow network incoming from leader, election times out
+// with slow network incoming from leader, election times test_result
 // to become a candidate with an increased term. Then, the
 // candiate's response to late leader heartbeat forces the leader
 // to step down.

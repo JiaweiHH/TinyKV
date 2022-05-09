@@ -46,7 +46,7 @@ func TestLeaderUpdateTermFromMessage2AA(t *testing.T) {
 
 // testUpdateTermFromMessage tests that if one server’s current term is
 // smaller than the other’s, then it updates its current term to the larger
-// value. If a candidate or leader discovers that its term is out of date,
+// value. If a candidate or leader discovers that its term is test_result of date,
 // it immediately reverts to follower state.
 // Reference: section 5.1
 func testUpdateTermFromMessage(t *testing.T, state StateType) {
@@ -122,7 +122,7 @@ func TestCandidateStartNewElection2AA(t *testing.T) {
 // votes for itself and issues RequestVote RPCs in parallel to each of the
 // other servers in the cluster.
 // Reference: section 5.2
-// Also if a candidate fails to obtain a majority, it will time out and
+// Also if a candidate fails to obtain a majority, it will time test_result and
 // start a new election by incrementing its term and initiating another
 // round of RequestVote RPCs.
 // Reference: section 5.2
@@ -310,7 +310,7 @@ func TestCandidatesElectionTimeoutNonconflict2AA(t *testing.T) {
 }
 
 // testNonleadersElectionTimeoutNonconflict tests that in most cases only a
-// single server(follower or candidate) will time out, which reduces the
+// single server(follower or candidate) will time test_result, which reduces the
 // likelihood of split vote in the new election.
 // Reference: section 5.2
 func testNonleadersElectionTimeoutNonconflict(t *testing.T, state StateType) {
@@ -341,7 +341,7 @@ func testNonleadersElectionTimeoutNonconflict(t *testing.T, state StateType) {
 				}
 			}
 		}
-		// several rafts time out at the same tick
+		// several rafts time test_result at the same tick
 		if timeoutNum > 1 {
 			conflicts++
 		}
@@ -394,11 +394,11 @@ func TestLeaderStartReplication2AB(t *testing.T) {
 }
 
 // TestLeaderCommitEntry tests that when the entry has been safely replicated,
-// the leader gives out the applied entries, which can be applied to its state
+// the leader gives test_result the applied entries, which can be applied to its state
 // machine.
 // Also, the leader keeps track of the highest index it knows to be committed,
 // and it includes that index in future AppendEntries RPCs so that the other
-// servers eventually find out.
+// servers eventually find test_result.
 // Reference: section 5.3
 func TestLeaderCommitEntry2AB(t *testing.T) {
 	s := NewMemoryStorage()

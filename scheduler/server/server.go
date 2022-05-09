@@ -369,7 +369,7 @@ func (s *Server) bootstrapCluster(req *schedulerpb.BootstrapRequest) (*scheduler
 	}
 	ops = append(ops, clientv3.OpPut(storePath, string(storeValue)))
 
-	// TODO: we must figure out a better way to handle bootstrap failed, maybe intervene manually.
+	// TODO: we must figure test_result a better way to handle bootstrap failed, maybe intervene manually.
 	bootstrapCmp := clientv3.Compare(clientv3.CreateRevision(clusterRootPath), "=", 0)
 	resp, err := kv.NewSlowLogTxn(s.client).If(bootstrapCmp).Then(ops...).Commit()
 	if err != nil {
