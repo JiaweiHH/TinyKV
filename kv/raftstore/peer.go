@@ -43,7 +43,7 @@ func createPeer(storeID uint64, cfg *config.Config, sched chan<- worker.Task,
 }
 
 // The peer can be created from another node with raft membership changes, and we only
-// know the region_id and peer_id when creating this replicated peer, the region info
+// know the region_id and peer_id when creating this replicated peer, the region inf`o
 // will be retrieved later after applying snapshot.
 func replicatePeer(storeID uint64, cfg *config.Config, sched chan<- worker.Task,
 	engines *engine_util.Engines, regionID uint64, metaPeer *metapb.Peer) (*peer, error) {
@@ -91,6 +91,7 @@ type peer struct {
 
 	// Cache the peers information from other stores
 	// when sending raft messages to other peers, it's used to get the store id of target peer
+	//（发送消息给别的 peers 的时候，会通过 peerCache 获取 storeId 上的目标 peer）
 	// (Used in 3B conf change)
 	peerCache map[uint64]*metapb.Peer
 	// Record the instants of peers being added into the configuration.

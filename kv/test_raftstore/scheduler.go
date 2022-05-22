@@ -467,7 +467,6 @@ func (m *MockSchedulerClient) findRegion(key []byte) *regionItem {
 	if result == nil || !result.Contains(key) {
 		return nil
 	}
-
 	return result
 }
 

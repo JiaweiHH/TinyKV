@@ -87,6 +87,10 @@ func NewRawNode(config *Config) (*RawNode, error) {
 		Raft: newRaft(config), // 创建底层 Raft 节点
 	}
 	rn.prevHardSt, _, _ = config.Storage.InitialState()
+	rn.prevSoftSt = &SoftState{
+		Lead:      rn.Raft.Lead,
+		RaftState: rn.Raft.State,
+	}
 	return rn, nil
 }
 
@@ -155,7 +159,7 @@ func (rn *RawNode) Step(m pb.Message) error {
 
 // softStateUpdate 检查 SoftState 是否有更新
 func (rn *RawNode) isSoftStateUpdate() bool {
-	return rn.prevSoftSt != nil && (rn.Raft.Lead != rn.prevSoftSt.Lead || rn.Raft.State != rn.prevSoftSt.RaftState)
+	return rn.Raft.Lead != rn.prevSoftSt.Lead || rn.Raft.State != rn.prevSoftSt.RaftState
 }
 
 // hardStateUpdate 检查 HardState 是否有更新
@@ -173,7 +177,10 @@ func (rn *RawNode) Ready() Ready {
 		CommittedEntries: rn.Raft.RaftLog.nextEnts(),
 	}
 	if rn.isSoftStateUpdate() {
+		// 虽然 SoftState 不需要持久化，但是检测到 SoftState 更新的时候需要获取
+		// 测试用例会用到（单纯的从 Raft 角度分析的话，这部分数据没有获取的必要）
 		rd.SoftState = &SoftState{Lead: rn.Raft.Lead, RaftState: rn.Raft.State}
+		rn.prevSoftSt = rd.SoftState
 	}
 	if rn.isHardStateUpdate() {
 		rd.HardState = pb.HardState{
@@ -192,7 +199,8 @@ func (rn *RawNode) Ready() Ready {
 // HasReady called when RawNode user need to check if any Ready pending.
 func (rn *RawNode) HasReady() bool {
 	// Your Code Here (2A).
-	return len(rn.Raft.msgs) > 0 || rn.isSoftStateUpdate() || rn.isHardStateUpdate() ||
+	// softState 不需要持久化，因此不构成 HasReady 的条件
+	return len(rn.Raft.msgs) > 0 || rn.isHardStateUpdate() ||
 		len(rn.Raft.RaftLog.unstableEntries()) > 0 || len(rn.Raft.RaftLog.nextEnts()) > 0 ||
 		!IsEmptySnap(rn.Raft.RaftLog.pendingSnapshot)
 }

@@ -83,6 +83,7 @@ func newLog(storage Storage) *RaftLog {
 	l.committed = hardState.Commit
 	entries, _ := storage.Entries(firstIndex, lastIndex+1)
 	l.entries = append(l.entries, entries[0:]...)
+	log.SetLevel(log.LOG_LEVEL_FATAL)
 	log.Infof("{newLog} firstIndex %v, lastIndex %v, len(entries) %v, committed %v", firstIndex, lastIndex, len(l.entries), l.committed)
 	return l
 }

@@ -16,7 +16,7 @@ const (
 	// message of base tick to drive the ticker（驱动计时器）
 	MsgTypeTick MsgType = 2
 	// message wraps a raft message that should be forwarded to Raft module
-	// the raft message is from peer on other store（Peer 发送给别的节点的消息）
+	// the raft message is from peer on other store（来自别的 storage 上 peer 的消息）
 	MsgTypeRaftMessage MsgType = 3
 	// message wraps a raft command that maybe a read/write request or admin request
 	// the raft command should be proposed to Raft module（提交到 Raft 的消息）

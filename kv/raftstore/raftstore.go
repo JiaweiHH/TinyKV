@@ -267,9 +267,9 @@ func (bs *Raftstore) startWorkers(peers []*peer) {
 	workers := bs.workers
 	router := bs.router
 	bs.wg.Add(2) // raftWorker, storeWorker
-	rw := newRaftWorker(ctx, router)
+	rw := newRaftWorker(ctx, router)	// 1. raft_worker
 	go rw.run(bs.closeCh, bs.wg)
-	sw := newStoreWorker(ctx, bs.storeState)
+	sw := newStoreWorker(ctx, bs.storeState)	// 2. store_worker
 	go sw.run(bs.closeCh, bs.wg)
 	router.sendStore(message.Msg{Type: message.MsgTypeStoreStart, Data: ctx.store})
 	for i := 0; i < len(peers); i++ {
@@ -278,6 +278,7 @@ func (bs *Raftstore) startWorkers(peers []*peer) {
 	}
 	engines := ctx.engine
 	cfg := ctx.cfg
+	// 3-6. split_worker, region_worker, raftLog-gc worker, scheduler_worker
 	workers.splitCheckWorker.Start(runner.NewSplitCheckHandler(engines.Kv, NewRaftstoreRouter(router), cfg))
 	workers.regionWorker.Start(runner.NewRegionTaskHandler(engines, ctx.snapMgr))
 	workers.raftLogGCWorker.Start(runner.NewRaftLogGCTaskHandler())

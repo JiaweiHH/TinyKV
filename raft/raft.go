@@ -157,6 +157,8 @@ type Raft struct {
 	// valid message from current leader when it is a follower.
 	electionElapsed int
 
+	transferElapsed int // 用于计时 transfer 的时间
+
 	// leadTransferee is id of the leader transfer target when its value is not zero.
 	// Follow the procedure defined in section 3.10 of Raft phd thesis.
 	// (https://web.stanford.edu/~ouster/cgi-bin/papers/OngaroPhD.pdf)
@@ -169,6 +171,7 @@ type Raft struct {
 	// configuration change (if any). Config changes are only allowed to
 	// be proposed if the leader's applied index is greater than this
 	// value.
+	//（PendingConfIndex 表示当前还没有生效的 ConfChange，只有在日志被提交并应用之后才会生效）
 	// (Used in 3A conf change)
 	PendingConfIndex uint64
 }
@@ -196,7 +199,19 @@ func newRaft(c *Config) *Raft {
 	for _, id := range c.peers {
 		rf.Prs[id] = &Progress{}
 	}
+	rf.PendingConfIndex = rf.initPendingConfIndex()
 	return rf
+}
+
+// initPendingConfIndex 初始化 pendingConfIndex
+// 查找 [appliedIndex + 1, lastIndex] 之间是否存在还没有 Apply 的 ConfChange Entry
+func (r *Raft) initPendingConfIndex() uint64 {
+	for i := r.RaftLog.applied + 1; i <= r.RaftLog.LastIndex(); i++ {
+		if r.RaftLog.entries[i-r.RaftLog.FirstIndex()].EntryType == pb.EntryType_EntryConfChange {
+			return i
+		}
+	}
+	return None
 }
 
 // quorum 返回 majority 节点的数量
@@ -241,8 +256,15 @@ func (r *Raft) appendEntry(entries []*pb.Entry) {
 		// 设置新日志的索引和任期
 		entries[i].Index = lastIndex + uint64(i) + 1
 		entries[i].Term = r.Term
+		if entries[i].EntryType == pb.EntryType_EntryConfChange {
+			r.PendingConfIndex = entries[i].Index
+		}
 	}
 	r.RaftLog.appendNewEntry(entries)
+}
+
+func (r *Raft) sendTimeoutNow(to uint64) {
+	r.msgs = append(r.msgs, pb.Message{MsgType: pb.MessageType_MsgTimeoutNow, From: r.id, To: to})
 }
 
 // sendSnapshot 发送快照给别的节点
@@ -370,6 +392,13 @@ func (r *Raft) tick() {
 			// MessageType_MsgBeat 属于内部消息，不需要经过 RawNode 处理
 			r.Step(pb.Message{From: r.id, To: r.id, MsgType: pb.MessageType_MsgBeat})
 		}
+		if r.leadTransferee != None {
+			// 在选举超时后领导权禅让仍然未完成，则 leader 应该终止领导权禅让，这样可以恢复客户端请求
+			r.transferElapsed++
+			if r.transferElapsed >= r.electionTimeout {
+				r.leadTransferee = None
+			}
+		}
 	default: // Follower 和 Candidate 需要更新超时选举时钟
 		r.electionElapsed++
 		if r.electionElapsed >= r.randomElectionTimeout {
@@ -382,11 +411,16 @@ func (r *Raft) tick() {
 // becomeFollower transform this peer's state to Follower
 func (r *Raft) becomeFollower(term uint64, lead uint64) {
 	// Your Code Here (2A).
+	if term > r.Term {
+		// 只有 Term > currentTerm 的时候才需要对 Vote 进行重置
+		// 这样可以保证在一个任期内只会进行一次投票
+		r.Term = term
+		r.Vote = None
+	}
 	r.State = StateFollower
-	r.Term = term
 	r.Lead = lead
 	r.electionElapsed = 0
-	r.Vote = None
+	r.leadTransferee = None
 	r.resetRandomizedElectionTimeout()
 }
 
@@ -405,18 +439,18 @@ func (r *Raft) becomeLeader() {
 	// Your Code Here (2A).
 	// NOTE: Leader should propose a noop entry on its term
 	r.State = StateLeader
+	r.Lead = r.id
 
 	// 初始化 nextIndex 和 matchIndex
 	for id := range r.Prs {
 		r.Prs[id].Next = r.RaftLog.LastIndex() + 1 // 初始化为 leader 的最后一条日志索引（后续出现冲突会往前移动）
 		r.Prs[id].Match = 0                        // 初始化为 0 就可以了
 	}
-
+	r.PendingConfIndex = r.initPendingConfIndex()
 	// 成为 Leader 之后立马在日志中追加一条 noop 日志，这是因为
 	// 在 Raft 论文中提交 Leader 永远不会通过计算副本的方式提交一个之前任期、并且已经被复制到大多数节点的日志
 	// 通过追加一条当前任期的 noop 日志，可以快速的提交之前任期内所有被复制到大多数节点的日志
 	r.Step(pb.Message{MsgType: pb.MessageType_MsgPropose, Entries: []*pb.Entry{{}}})
-	//r.Step(pb.Message{MsgType: pb.MessageType_MsgPropose, Entries: []*pb.Entry{{}})
 }
 
 func (r *Raft) poll(id uint64, voted bool) int {
@@ -434,6 +468,9 @@ func (r *Raft) poll(id uint64, voted bool) int {
 // on `eraftpb.proto` for what msgs should be handled
 func (r *Raft) Step(m pb.Message) error {
 	// Your Code Here (2A).
+	if _, ok := r.Prs[r.id]; !ok && m.MsgType == pb.MessageType_MsgTimeoutNow {
+		return nil
+	}
 	switch r.State {
 	case StateFollower: // Follower 可以接收到的消息：MsgHup、MsgRequestVote、MsgHeartBeat、MsgAppendEntry
 		r.stepFollower(m)
@@ -458,6 +495,14 @@ func (r *Raft) stepFollower(m pb.Message) {
 		r.handleAppendEntries(m)
 	case pb.MessageType_MsgSnapshot:
 		r.handleSnapshot(m)
+	case pb.MessageType_MsgTimeoutNow:
+		r.handleTimeoutNowRequest(m)
+	case pb.MessageType_MsgTransferLeader:
+		// 非 leader 收到领导权禅让消息，需要转发给 leader
+		if r.Lead != None {
+			m.To = r.Lead
+			r.msgs = append(r.msgs, m)
+		}
 	}
 }
 
@@ -476,6 +521,12 @@ func (r *Raft) stepCandidate(m pb.Message) {
 		r.handleAppendEntries(m)
 	case pb.MessageType_MsgSnapshot:
 		r.handleSnapshot(m)
+	case pb.MessageType_MsgTransferLeader:
+		// 非 leader 收到领导权禅让消息，需要转发给 leader
+		if r.Lead != None {
+			m.To = r.Lead
+			r.msgs = append(r.msgs, m)
+		}
 	}
 }
 
@@ -494,6 +545,42 @@ func (r *Raft) stepLeader(m pb.Message) {
 		r.handlePropose(m)
 	case pb.MessageType_MsgAppendResponse: // 收到 AppendEntry response
 		r.handleAppendEntriesResponse(m)
+	case pb.MessageType_MsgTransferLeader: // 领导权禅让消息
+		r.handleTransferLeader(m)
+	}
+}
+
+func (r *Raft) handleTimeoutNowRequest(m pb.Message) {
+	// 直接发起选举
+	if err := r.Step(pb.Message{MsgType: pb.MessageType_MsgHup}); err != nil {
+		log.Panic(err)
+	}
+}
+
+func (r *Raft) handleTransferLeader(m pb.Message) {
+	// 判断 transferee 是否在集群中
+	if _, ok := r.Prs[m.From]; !ok {
+		return
+	}
+	// 如果 transferee 就是 leader 自身，则无事发生
+	if m.From == r.id {
+		return
+	}
+	// 判断是否有转让流程正在进行，如果是相同节点的转让流程就返回，否则的话终止上一个转让流程
+	if r.leadTransferee != None {
+		if r.leadTransferee == m.From {
+			return
+		}
+		r.leadTransferee = None
+	}
+	r.leadTransferee = m.From
+	r.transferElapsed = 0
+	if r.Prs[m.From].Match == r.RaftLog.LastIndex() {
+		// 日志是最新的，直接发送 TimeoutNow 消息
+		r.sendTimeoutNow(m.From)
+	} else {
+		// 日志不是最新的，则帮助 leadTransferee 匹配最新的日志
+		r.sendAppend(m.From)
 	}
 }
 
@@ -541,6 +628,10 @@ func (r *Raft) handleRequestVoteResponse(m pb.Message) {
 // handlePropose 追加从上层应用接收到的新日志，并广播给 follower
 func (r *Raft) handlePropose(m pb.Message) {
 	r.appendEntry(m.Entries)
+	// leader 处于领导权禅让，停止接收新的请求
+	if r.leadTransferee != None {
+		return
+	}
 	r.Prs[r.id].Match = r.RaftLog.LastIndex()
 	r.Prs[r.id].Next = r.RaftLog.LastIndex() + 1
 	if len(r.Prs) == 1 {
@@ -639,6 +730,11 @@ func (r *Raft) handleAppendEntriesResponse(m pb.Message) {
 			r.broadcastAppendEntry() // 广播更新所有 follower 的 commitIndex
 		}
 	}
+	if r.leadTransferee == m.From && r.Prs[m.From].Match == r.RaftLog.LastIndex() {
+		// AppendEntryResponse 回复来自 leadTransferee，检查日志是否是最新的
+		// 如果 leadTransferee 达到了最新的日志则立即发起领导权禅让
+		r.sendTimeoutNow(m.From)
+	}
 }
 
 func (r *Raft) handleHeartbeatResponse(m pb.Message) {
@@ -700,7 +796,7 @@ func (r *Raft) handleSnapshot(m pb.Message) {
 		// 更新集群配置
 		r.Prs = make(map[uint64]*Progress)
 		for _, id := range meta.ConfState.Nodes {
-			r.Prs[id] = &Progress{}
+			r.Prs[id] = &Progress{Next: r.RaftLog.LastIndex() + 1}
 		}
 		// 更新 response，提示 leader 更新 nextIndex
 		resp.Index = meta.Index
@@ -712,9 +808,24 @@ func (r *Raft) handleSnapshot(m pb.Message) {
 // addNode add a new node to raft group
 func (r *Raft) addNode(id uint64) {
 	// Your Code Here (3A).
+	if _, ok := r.Prs[id]; !ok {
+		r.Prs[id] = &Progress{Next: r.RaftLog.LastIndex() + 1}
+		r.PendingConfIndex = None // 清除 PendingConfIndex 表示当前没有未完成的配置更新
+	}
 }
 
 // removeNode remove a node from raft group
 func (r *Raft) removeNode(id uint64) {
 	// Your Code Here (3A).
+	if _, ok := r.Prs[id]; ok {
+		delete(r.Prs, id)
+		// 如果是删除节点，由于有节点被移除了，这个时候可能有新的日志可以提交
+		// 这是必要的，因为 TinyKV 只有在 handleAppendRequestResponse 的时候才会判断是否有新的日志可以提交
+		// 如果节点被移除了，则可能会因为缺少这个节点的回复，导致可以提交的日志无法在当前任期被提交
+		if r.State == StateLeader && r.maybeCommit() {
+			log.Infof("[removeNode commit] %v leader commit new entry, commitIndex %v", r.id, r.RaftLog.committed)
+			r.broadcastAppendEntry() // 广播更新所有 follower 的 commitIndex
+		}
+	}
+	r.PendingConfIndex = None // 清除 PendingConfIndex 表示当前没有未完成的配置更新
 }
